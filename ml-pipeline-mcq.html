@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The ML Pipeline — Age & Blood Pressure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+    --purple-50: #EEEDFE; --purple-100: #CECBF6; --purple-600: #534AB7; --purple-800: #3C3489;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-600: #854F0B; --amber-800: #633806;
+    --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-600: #993C1D;
+    --green-50: #EDFAF3; --green-400: #22C55E; --green-700: #15803D;
+    --red-50: #FEF2F2; --red-400: #EF4444; --red-700: #B91C1C;
+    --gray-50: #F8F8F6; --gray-100: #F1EFE8; --gray-200: #D3D1C7; --gray-600: #5F5E5A; --gray-800: #2C2C2A;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body { font-family: var(--font); background: #F4F2EC; min-height: 100vh; display: flex; flex-direction: column; color: var(--gray-800); }
+
+  .progress-wrap { background: white; border-bottom: 1px solid var(--gray-200); padding: 14px 32px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+  .progress-label { font-size: 12px; font-weight: 500; color: var(--gray-600); white-space: nowrap; min-width: 70px; }
+  .progress-track { flex: 1; height: 4px; background: var(--gray-200); border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--teal-400); border-radius: 999px; transition: width 0.4s ease; }
+  .progress-dots { display: flex; gap: 6px; }
+  .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); transition: background 0.3s; cursor: pointer; }
+  .progress-dot.active { background: var(--teal-400); }
+  .progress-dot.done { background: var(--teal-100); }
+
+  .slides-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 24px 100px; }
+  .slide { display: none; width: 100%; max-width: 820px; animation: fadeIn 0.35s ease; }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
+  .slide-num-badge { background: var(--teal-800); color: white; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; white-space: nowrap; margin-top: 4px; }
+  .slide-meta { flex: 1; }
+  .slide-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; }
+  .tag-ml { background: var(--purple-100); color: var(--purple-800); }
+  .tag-concept { background: var(--amber-100); color: var(--amber-800); }
+  .slide-title { font-size: 24px; font-weight: 600; color: var(--gray-800); line-height: 1.2; }
+
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-600); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--teal-100); }
+
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px 24px; margin-bottom: 14px; }
+  .card-teal { background: var(--teal-50); border-color: var(--teal-100); }
+  .card-purple { background: var(--purple-50); border-color: var(--purple-100); }
+  .card-amber { background: var(--amber-50); border-color: var(--amber-100); }
+  .card p { font-size: 14px; line-height: 1.7; color: var(--gray-600); }
+  .card p + p { margin-top: 8px; }
+  .card strong { color: var(--gray-800); font-weight: 500; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .formula { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--teal-800); background: var(--teal-50); border: 1px solid var(--teal-100); border-radius: 10px; padding: 16px 24px; text-align: center; margin: 16px 0; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .data-table th { background: var(--teal-800); color: white; padding: 10px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.04em; }
+  .data-table th:first-child { border-radius: 8px 0 0 0; }
+  .data-table th:last-child { border-radius: 0 8px 0 0; }
+  .data-table td { padding: 10px 16px; border-bottom: 1px solid var(--gray-200); color: var(--gray-800); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:nth-child(even) td { background: var(--gray-50); }
+  .data-table .feature { font-weight: 500; color: var(--teal-600); }
+  .data-table .label { font-weight: 500; color: var(--purple-600); }
+
+  canvas { display: block; }
+  .plot-wrap { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+  .plot-title { font-size: 12px; font-weight: 500; color: var(--gray-600); margin-bottom: 12px; text-align: center; letter-spacing: 0.03em; }
+
+  .slider-wrap { display: flex; align-items: center; gap: 14px; padding: 14px 0 6px; }
+  .slider-label { font-size: 13px; color: var(--gray-600); white-space: nowrap; }
+  input[type=range] { flex: 1; accent-color: var(--teal-400); height: 4px; cursor: pointer; }
+  .slider-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--teal-800); min-width: 48px; text-align: right; }
+
+  .error-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--mono); }
+  .error-table th { background: var(--gray-100); color: var(--gray-600); padding: 8px 12px; text-align: right; font-weight: 500; font-size: 11px; letter-spacing: 0.04em; border-bottom: 1px solid var(--gray-200); }
+  .error-table th:first-child { text-align: left; }
+  .error-table td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); }
+  .error-table td:first-child { text-align: left; color: var(--gray-600); }
+  .error-table .total-row td { background: var(--teal-50); font-weight: 500; color: var(--teal-800); border-top: 1px solid var(--teal-100); border-bottom: none; }
+  .error-highlight { color: #E24B4A; }
+  .error-good { color: var(--teal-600); }
+
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vocab-item { display: flex; align-items: flex-start; gap: 10px; background: white; border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px 14px; }
+  .vocab-arrow { font-size: 16px; color: var(--teal-400); flex-shrink: 0; margin-top: 1px; }
+  .vocab-plain { font-size: 13px; color: var(--gray-600); }
+  .vocab-term { font-size: 12px; font-weight: 600; color: var(--purple-600); margin-top: 2px; }
+
+  .callout { border-left: 3px solid var(--teal-400); background: var(--teal-50); border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: var(--teal-800); line-height: 1.6; }
+  .callout-amber { border-color: var(--amber-600); background: var(--amber-50); color: var(--amber-800); }
+
+  /* ── MCQ styles ── */
+  .mcq-section {
+    margin-top: 28px;
+    border-top: 2px dashed var(--gray-200);
+    padding-top: 24px;
+  }
+  .mcq-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--purple-600);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mcq-section-label::after { content: ''; flex: 1; height: 1px; background: var(--purple-100); }
+
+  .mcq-block {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .mcq-q-num {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--purple-600);
+    margin-bottom: 6px;
+  }
+  .mcq-question {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .mcq-opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-200);
+    background: var(--gray-50);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-800);
+    text-align: left;
+    font-family: var(--font);
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.5;
+    width: 100%;
+  }
+  .mcq-opt:hover:not(:disabled) { border-color: var(--purple-100); background: var(--purple-50); }
+  .mcq-opt .opt-letter {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--purple-600);
+    background: var(--purple-50);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: var(--mono);
+  }
+  .mcq-opt.correct {
+    border-color: var(--green-400);
+    background: var(--green-50);
+    color: var(--green-700);
+  }
+  .mcq-opt.correct .opt-letter { background: #DCFCE7; color: var(--green-700); }
+  .mcq-opt.wrong {
+    border-color: var(--red-400);
+    background: var(--red-50);
+    color: var(--red-700);
+  }
+  .mcq-opt.wrong .opt-letter { background: #FEE2E2; color: var(--red-700); }
+  .mcq-opt.reveal-correct {
+    border-color: var(--green-400);
+    background: var(--green-50);
+    color: var(--green-700);
+    opacity: 0.7;
+  }
+  .mcq-opt.reveal-correct .opt-letter { background: #DCFCE7; color: var(--green-700); }
+  .mcq-opt:disabled { cursor: default; }
+
+  .mcq-feedback {
+    display: none;
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .mcq-feedback.correct-fb { background: var(--green-50); border: 1px solid var(--green-400); color: var(--green-700); }
+  .mcq-feedback.wrong-fb { background: var(--red-50); border: 1px solid var(--red-400); color: var(--red-700); }
+  .mcq-feedback .fb-icon { font-weight: 600; margin-right: 4px; }
+  .mcq-feedback.show { display: block; }
+
+  /* ── nav ── */
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; gap: 16px; }
+  .nav-btn { font-family: var(--font); font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-800); transition: all 0.15s; }
+  .nav-btn:hover { background: var(--gray-100); }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn.primary { background: var(--teal-800); color: white; border-color: var(--teal-800); }
+  .nav-btn.primary:hover { background: var(--teal-600); border-color: var(--teal-600); }
+  .nav-slide-info { font-size: 13px; color: var(--gray-600); text-align: center; }
+  .nav-slide-info strong { color: var(--gray-800); }
+
+  @media (max-width: 600px) {
+    .two-col { grid-template-columns: 1fr; }
+    .vocab-grid { grid-template-columns: 1fr; }
+    .progress-dots { display: none; }
+    .slides-wrap { padding: 20px 16px 90px; }
+    .nav-bar { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap">
+  <span class="progress-label" id="prog-label">Slide 1 of 10</span>
+  <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:10%"></div></div>
+  <div class="progress-dots" id="prog-dots"></div>
+</div>
+
+<div class="slides-wrap">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active" id="slide-1">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 1</span>
+      <div class="slide-meta">
+        <div class="slide-tags"><span class="tag tag-ml">ML term: task definition</span></div>
+        <h1 class="slide-title">The clinical problem</h1>
+      </div>
+    </div>
+    <div class="section-label">Setup</div>
+    <div class="card card-teal">
+      <p style="font-size:20px; font-weight:500; color:var(--teal-800); margin-bottom:10px;">Can we predict a patient's systolic blood pressure from their age alone?</p>
+      <p>No mathematics yet — just the clinical motivation. We start with a question a clinician would actually ask.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <p><strong>What we know clinically</strong></p>
+        <p>Doctors already observe that older patients tend to have higher blood pressure. This is established clinical knowledge.</p>
+      </div>
+      <div class="card">
+        <p><strong>What we want to do</strong></p>
+        <p>Can a machine learn that same pattern automatically — just from looking at past patient data?</p>
+      </div>
+    </div>
+    <div class="callout">This is the starting point of every ML project: a real problem, not an algorithm. The algorithm comes much later.</div>
+    <div class="mcq-section" id="mcq-1"></div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" id="slide-2">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 2</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: supervised learning</span>
+          <span class="tag tag-ml">ML term: hypothesis function</span>
+        </div>
+        <h1 class="slide-title">Problem statement</h1>
+      </div>
+    </div>
+    <div class="section-label">Setup</div>
+    <div class="two-col">
+      <div class="card card-teal">
+        <p style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal-600); margin-bottom:10px;">Plain English</p>
+        <p style="font-size:16px; color:var(--teal-800);">Given a patient's age, predict their systolic blood pressure.</p>
+      </div>
+      <div class="card card-purple">
+        <p style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--purple-600); margin-bottom:10px;">Mathematical</p>
+        <p style="font-size:16px; color:var(--purple-800); font-family:var(--mono);">BP = f(age)</p>
+      </div>
+    </div>
+    <div class="formula">Goal: find f &nbsp;such that&nbsp; f(age) ≈ BP</div>
+    <div class="card">
+      <p><strong>What does f mean?</strong></p>
+      <p>f is a function — a rule or formula that takes age as input and returns a predicted blood pressure. The job of machine learning is to find the best f from data.</p>
+    </div>
+    <div class="callout">Because we already know the correct BP for each training patient, this is called <strong>supervised learning</strong> — the model learns under supervision of known answers.</div>
+    <div class="mcq-section" id="mcq-2"></div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" id="slide-3">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 3</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: train set</span>
+          <span class="tag tag-ml">ML term: test set</span>
+          <span class="tag tag-concept">Key concept: train/test split</span>
+        </div>
+        <h1 class="slide-title">Before we look at data — a crucial idea</h1>
+      </div>
+    </div>
+    <div class="section-label">Setup</div>
+    <div class="callout callout-amber">We must decide how to split our data <em>before</em> training begins. This is one of the most important rules in machine learning.</div>
+    <div class="two-col">
+      <div class="card card-teal">
+        <p style="font-size:13px; font-weight:600; color:var(--teal-600); margin-bottom:8px;">Training set</p>
+        <p>The rows the model <strong>learns from</strong>. It sees these during training and adjusts its parameters based on them.</p>
+      </div>
+      <div class="card card-purple">
+        <p style="font-size:13px; font-weight:600; color:var(--purple-600); margin-bottom:8px;">Test set</p>
+        <p>Rows <strong>held back entirely</strong>. The model never sees these during training. Used only for final evaluation.</p>
+      </div>
+    </div>
+    <div class="card card-amber">
+      <p><strong>The medical student analogy</strong></p>
+      <p>A medical student studies past cases (train set), then sits an exam on new cases they have never seen before (test set). You would not mark them on cases they already memorised — that tells you nothing about whether they truly learned.</p>
+    </div>
+    <div class="callout"><strong>Rule:</strong> the model must never see test data during training — ever. Breaking this rule gives you falsely optimistic results.</div>
+    <div class="mcq-section" id="mcq-3"></div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" id="slide-4">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 4</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: training set</span>
+          <span class="tag tag-ml">ML term: features &amp; labels</span>
+        </div>
+        <h1 class="slide-title">The data</h1>
+      </div>
+    </div>
+    <div class="section-label">Training</div>
+    <div class="two-col">
+      <div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>Patient</th><th>Age (feature x)</th><th>BP mmHg (label y)</th></tr></thead>
+            <tbody>
+              <tr><td>P1</td><td class="feature">30</td><td class="label">115</td></tr>
+              <tr><td>P2</td><td class="feature">50</td><td class="label">130</td></tr>
+              <tr><td>P3</td><td class="feature">70</td><td class="label">150</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="two-col" style="margin-top:10px;">
+          <div class="card card-teal" style="padding:12px 14px;">
+            <p style="font-size:11px; font-weight:600; color:var(--teal-600); text-transform:uppercase; letter-spacing:0.05em;">Feature (x)</p>
+            <p style="color:var(--teal-800);">Age — the input we give the model</p>
+          </div>
+          <div class="card card-purple" style="padding:12px 14px;">
+            <p style="font-size:11px; font-weight:600; color:var(--purple-600); text-transform:uppercase; letter-spacing:0.05em;">Label (y)</p>
+            <p style="color:var(--purple-800);">BP — the answer we want to predict</p>
+          </div>
+        </div>
+      </div>
+      <div class="plot-wrap" style="margin:0;">
+        <p class="plot-title">Scatter plot — age vs systolic BP (training data)</p>
+        <canvas id="scatter-static" width="320" height="220"></canvas>
+      </div>
+    </div>
+    <div class="mcq-section" id="mcq-4"></div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide" id="slide-5">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 5</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: model</span>
+          <span class="tag tag-ml">ML term: parameter</span>
+        </div>
+        <h1 class="slide-title">The model</h1>
+      </div>
+    </div>
+    <div class="section-label">Training</div>
+    <div class="formula">BP = w × age</div>
+    <div class="two-col">
+      <div class="card">
+        <p><strong>What is w?</strong></p>
+        <p>w is the parameter — the single number the model needs to learn. Different values of w give different lines through the data. The model's job is to find the best w.</p>
+      </div>
+      <div class="card card-teal">
+        <p><strong>Why a line?</strong></p>
+        <p>Look at the scatter plot — the relationship appears roughly linear. As age increases, BP increases. A line is the simplest model that captures this.</p>
+      </div>
+    </div>
+    <div class="callout callout-amber"><strong>Note on the bias term:</strong> a complete model would be BP = w × age + b, where b is a baseline constant. We are deferring b for now to keep things clear — we will add it in the next lesson.</div>
+    <div class="mcq-section" id="mcq-5"></div>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide" id="slide-6">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 6</span>
+      <div class="slide-meta">
+        <div class="slide-tags"><span class="tag tag-ml">ML term: parameter search</span></div>
+        <h1 class="slide-title">Trying values of w</h1>
+      </div>
+    </div>
+    <div class="section-label">Training</div>
+    <div class="callout">Before defining error formally — look at the plot below. Some values of w produce lines that clearly fit better than others. Which one looks right to you?</div>
+    <div class="plot-wrap">
+      <p class="plot-title">Three candidate lines over the training data</p>
+      <canvas id="scatter-candidates" width="740" height="260"></canvas>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+      <div class="card" style="text-align:center; padding:12px;">
+        <p style="font-family:var(--mono); font-size:18px; color:#E24B4A; font-weight:500;">w = 0.5</p>
+        <p style="font-size:12px; color:var(--gray-600); margin-top:4px;">Line too flat — underestimates older patients</p>
+      </div>
+      <div class="card card-teal" style="text-align:center; padding:12px;">
+        <p style="font-family:var(--mono); font-size:18px; color:var(--teal-800); font-weight:500;">w = 1.0</p>
+        <p style="font-size:12px; color:var(--teal-600); margin-top:4px;">Looks closer — follows the trend</p>
+      </div>
+      <div class="card" style="text-align:center; padding:12px;">
+        <p style="font-family:var(--mono); font-size:18px; color:#E24B4A; font-weight:500;">w = 2.0</p>
+        <p style="font-size:12px; color:var(--gray-600); margin-top:4px;">Line too steep — overestimates older patients</p>
+      </div>
+    </div>
+    <div class="mcq-section" id="mcq-6"></div>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide" id="slide-7">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 7</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: cost function</span>
+          <span class="tag tag-ml">ML term: mean absolute error</span>
+        </div>
+        <h1 class="slide-title">Measuring error</h1>
+      </div>
+    </div>
+    <div class="section-label">Training</div>
+    <div class="slider-wrap">
+      <span class="slider-label">Adjust w:</span>
+      <input type="range" id="w-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+      <span class="slider-val" id="w-val">1.0</span>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden; margin-bottom:14px;">
+      <table class="error-table">
+        <thead>
+          <tr><th>Patient</th><th>Age</th><th>Actual BP</th><th>Predicted (w × age)</th><th>Error |pred − actual|</th></tr>
+        </thead>
+        <tbody id="error-tbody"></tbody>
+        <tfoot><tr class="total-row"><td colspan="4">Average error (cost)</td><td id="avg-error"></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="two-col">
+      <div class="plot-wrap" style="margin:0;">
+        <p class="plot-title">Line fit for current w</p>
+        <canvas id="scatter-interactive" width="360" height="200"></canvas>
+      </div>
+      <div class="plot-wrap" style="margin:0;">
+        <p class="plot-title">Average error vs w</p>
+        <canvas id="cost-curve" width="360" height="200"></canvas>
+      </div>
+    </div>
+    <div class="callout">The <strong>average error</strong> is what we formally call the <strong>cost function</strong>. The lower it is, the better w fits the data. Try dragging w — watch the table and plots update live.</div>
+    <div class="mcq-section" id="mcq-7"></div>
+  </div>
+
+  <!-- SLIDE 8 -->
+  <div class="slide" id="slide-8">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 8</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: optimisation</span>
+          <span class="tag tag-ml">ML term: learning</span>
+        </div>
+        <h1 class="slide-title">Finding the best w</h1>
+      </div>
+    </div>
+    <div class="section-label">Training</div>
+    <div class="card card-teal" style="margin-bottom:14px;">
+      <p><strong>The model "learns" by searching for the w that produces the lowest average error.</strong></p>
+      <p>In practice this search is done automatically — the algorithm does not try every value by hand. It follows the slope of the cost curve downward until it reaches the minimum.</p>
+    </div>
+    <div class="plot-wrap">
+      <p class="plot-title">Cost curve — average error vs w (the model finds the bottom)</p>
+      <canvas id="cost-full" width="740" height="240"></canvas>
+    </div>
+    <div class="callout callout-amber">The automatic process of finding the minimum is called <strong>optimisation</strong>. The most common method is called gradient descent — but you do not need to know the mechanics yet. The key idea: the model searches for the w at the bottom of this curve.</div>
+    <div class="mcq-section" id="mcq-8"></div>
+  </div>
+
+  <!-- SLIDE 9 -->
+  <div class="slide" id="slide-9">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 9</span>
+      <div class="slide-meta">
+        <div class="slide-tags">
+          <span class="tag tag-ml">ML term: test set</span>
+          <span class="tag tag-ml">ML term: generalisation</span>
+          <span class="tag tag-concept">Key concept: overfitting</span>
+        </div>
+        <h1 class="slide-title">Evaluation — the honest test</h1>
+      </div>
+    </div>
+    <div class="section-label">Evaluation</div>
+    <div class="callout callout-amber">Discussion question: "Why can't we just evaluate on the same 3 rows we trained on?"</div>
+    <div class="two-col">
+      <div>
+        <div class="card card-teal" style="margin-bottom:10px;">
+          <p style="font-size:12px; font-weight:600; color:var(--teal-600); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">New patient (test set)</p>
+          <table class="data-table" style="font-size:13px;">
+            <thead><tr><th>Patient</th><th>Age</th><th>Actual BP</th></tr></thead>
+            <tbody><tr><td>P4</td><td class="feature">45</td><td class="label">127</td></tr></tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px 14px;">
+          <p style="font-size:12px; color:var(--gray-600);">Model prediction (w ≈ 1.0):</p>
+          <p style="font-family:var(--mono); font-size:16px; color:var(--teal-800); margin-top:4px;">1.0 × 45 = 45 mmHg</p>
+          <p style="font-size:12px; color:var(--gray-600); margin-top:8px;">Actual: 127 mmHg</p>
+          <p style="font-size:12px; color:var(--gray-600);">Error: |45 − 127| = 82 mmHg</p>
+          <p style="font-size:12px; color:var(--amber-600); margin-top:6px;">High error — because we have no bias term b yet. This is expected at this stage.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:10px;">
+          <p><strong>What evaluation tells us</strong></p>
+          <p>Did the model truly learn the pattern, or did it just memorise the 3 training rows? Testing on a new patient it has never seen gives an honest answer.</p>
+        </div>
+        <div class="card card-amber">
+          <p><strong>Overfitting (preview)</strong></p>
+          <p>If we evaluated only on training data, the model could score perfectly by memorising — without learning anything useful. This is called overfitting. The test set catches it.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mcq-section" id="mcq-9"></div>
+  </div>
+
+  <!-- SLIDE 10 -->
+  <div class="slide" id="slide-10">
+    <div class="slide-header">
+      <span class="slide-num-badge">Slide 10</span>
+      <div class="slide-meta">
+        <div class="slide-tags"><span class="tag tag-ml">ML term: full pipeline</span></div>
+        <h1 class="slide-title">What did we just do?</h1>
+      </div>
+    </div>
+    <div class="section-label">Wrap-up — vocabulary map</div>
+    <div class="vocab-grid">
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Clinical problem</p><p class="vocab-term">Task definition</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">BP = f(age)</p><p class="vocab-term">Hypothesis function</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">3-row table (seen)</p><p class="vocab-term">Training set</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Held-back patient</p><p class="vocab-term">Test set</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Age column</p><p class="vocab-term">Feature (x)</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">BP column</p><p class="vocab-term">Label (y)</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">BP = w × age</p><p class="vocab-term">Model</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">w</p><p class="vocab-term">Parameter</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Trying different w values</p><p class="vocab-term">Parameter search</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Average error</p><p class="vocab-term">Cost function</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Finding best w</p><p class="vocab-term">Optimisation</p></div></div>
+      <div class="vocab-item"><span class="vocab-arrow">→</span><div><p class="vocab-plain">Testing on new patient</p><p class="vocab-term">Evaluation / Inference</p></div></div>
+    </div>
+    <div class="callout" style="margin-top:16px;">You have just walked through a complete supervised ML pipeline — without writing a single line of code or naming a single algorithm. This is the skeleton every ML system is built on.</div>
+    <div class="mcq-section" id="mcq-10"></div>
+  </div>
+
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Back</button>
+  <div class="nav-slide-info" id="nav-info">Slide <strong>1</strong> of 10</div>
+  <button class="nav-btn primary" id="btn-next" onclick="navigate(1)">Next →</button>
+</div>
+
+<script>
+const TOTAL = 10;
+let current = 1;
+
+// ── MCQ data ─────────────────────────────────────────────
+const QUESTIONS = {
+  1: [
+    {
+      q: "What is the very first step of any machine learning project?",
+      opts: ["Choose an algorithm", "Clean the data", "Define a real problem to solve", "Split data into train and test"],
+      correct: 2,
+      explanation: "Correct! Every ML project starts with a clearly defined problem. Picking algorithms or cleaning data only makes sense once you know what question you are trying to answer."
+    },
+    {
+      q: "In this example, what is the input and what are we trying to predict?",
+      opts: ["Input: blood pressure → predict age", "Input: age → predict blood pressure", "Input: age and blood pressure → predict disease", "Input: medication → predict blood pressure"],
+      correct: 1,
+      explanation: "Correct! We give the model a patient's age (input/feature) and we want it to predict their systolic blood pressure (output/label)."
+    }
+  ],
+  2: [
+    {
+      q: "What does the notation BP = f(age) mean in plain English?",
+      opts: ["Blood pressure causes age to change", "Age and BP are unrelated", "Blood pressure is a function of age — age goes in, BP comes out", "f is a fixed formula we already know"],
+      correct: 2,
+      explanation: "Correct! f(age) means 'a function that takes age as input and produces a blood pressure prediction as output.' The goal of ML is to find the best f from data."
+    },
+    {
+      q: "Why is this problem called supervised learning?",
+      opts: ["Because a teacher watches the student train", "Because we already know the correct BP for each training patient", "Because the algorithm supervises the data cleaning", "Because we supervise which features to include"],
+      correct: 1,
+      explanation: "Correct! In supervised learning, every training example has a known label (the correct answer). The model learns by comparing its predictions against those known answers."
+    }
+  ],
+  3: [
+    {
+      q: "Why do we split data into a training set and a test set?",
+      opts: ["To make the dataset smaller and faster to process", "So we can train twice and pick the better model", "To have unseen data to evaluate the model honestly after training", "Because regulations require it"],
+      correct: 2,
+      explanation: "Correct! The test set is held back during training so it stays completely unseen. This gives us an honest measure of whether the model truly learned the pattern — not just memorised the training rows."
+    },
+    {
+      q: "When should the train/test split be decided?",
+      opts: ["After training, once we see which rows the model got wrong", "Before training begins — before the model sees any data", "After the model is deployed", "It doesn't matter when"],
+      correct: 1,
+      explanation: "Correct! The split must be decided before training starts. If you let the model influence which rows go into the test set, you risk data leakage and falsely optimistic results."
+    }
+  ],
+  4: [
+    {
+      q: "In the table, what is the 'feature' and what is the 'label'?",
+      opts: ["Feature = BP (output), Label = Age (input)", "Feature = Patient ID, Label = Age", "Feature = Age (input), Label = BP (what we predict)", "Both Age and BP are features"],
+      correct: 2,
+      explanation: "Correct! The feature is the input the model receives — Age. The label is the output we want the model to predict — Blood Pressure. This distinction is fundamental to supervised learning."
+    },
+    {
+      q: "Looking at the scatter plot, what pattern do you notice?",
+      opts: ["Blood pressure decreases as age increases", "There is no relationship between age and BP", "Blood pressure increases as age increases", "Blood pressure stays constant regardless of age"],
+      correct: 2,
+      explanation: "Correct! The scatter plot shows a positive trend — older patients tend to have higher systolic blood pressure. This is why a line (linear model) is a reasonable starting point."
+    }
+  ],
+  5: [
+    {
+      q: "In the model BP = w × age, what does w represent?",
+      opts: ["The patient's weight", "The parameter the model needs to learn from data", "The width of the scatter plot", "A fixed constant set by the doctor"],
+      correct: 1,
+      explanation: "Correct! w is the learnable parameter. Different values of w produce different lines through the data. The model's entire job is to find the value of w that best fits the training data."
+    },
+    {
+      q: "Why is the bias term b left out for now?",
+      opts: ["It doesn't exist in real models", "It would make the model less accurate", "To keep the model simple while learning the concept — it will be added later", "b is only needed for classification problems"],
+      correct: 2,
+      explanation: "Correct! We deliberately defer b (the baseline constant) to reduce cognitive load. In a full model, BP = w × age + b, and b handles the base level of BP independent of age."
+    }
+  ],
+  6: [
+    {
+      q: "Without calculating any error, which value of w looks like the best fit visually?",
+      opts: ["w = 0.5, because flatter lines are safer", "w = 1.0, because it follows the trend of the data points", "w = 2.0, because steeper means more sensitive", "All three lines are equally good"],
+      correct: 1,
+      explanation: "Correct! w = 1.0 produces a line that passes close to all three data points and follows their upward trend. w = 0.5 is too flat (misses older patients) and w = 2.0 is too steep (overshoots)."
+    },
+    {
+      q: "What is the purpose of trying multiple values of w before defining error formally?",
+      opts: ["To speed up computation", "To build visual intuition for what 'fitting' means before introducing the formula", "To avoid needing a cost function at all", "To pick the highest value of w"],
+      correct: 1,
+      explanation: "Correct! Seeing the lines visually first lets you develop intuition about what 'better fit' means before formalising it as a number. The definition of error should confirm what your eye already suspects."
+    }
+  ],
+  7: [
+    {
+      q: "What does the cost function measure?",
+      opts: ["The financial cost of training the model", "The average difference between the model's predictions and the actual values", "The number of parameters in the model", "How long training took"],
+      correct: 1,
+      explanation: "Correct! The cost function (here: mean absolute error) measures on average how far off the model's predictions are from the real values. Lower cost = better fitting model."
+    },
+    {
+      q: "If you increase w beyond the best value, what happens to the average error?",
+      opts: ["It decreases — higher w always means lower error", "It stays the same", "It increases — predictions overshoot the actual values", "It becomes negative"],
+      correct: 2,
+      explanation: "Correct! When w is too large the model predicts BP values that are too high, especially for older patients. This increases the error. The cost curve rises on both sides of the optimal w."
+    }
+  ],
+  8: [
+    {
+      q: "What does optimisation mean in the context of training this model?",
+      opts: ["Making the code run faster", "Finding the value of w that minimises the cost function", "Removing outliers from the training data", "Choosing the best feature to use"],
+      correct: 1,
+      explanation: "Correct! Optimisation is the process of searching for the parameter value (w) that produces the lowest possible cost. The model 'learns' by following the cost curve downward to its minimum."
+    },
+    {
+      q: "On the cost curve, where does the best w sit?",
+      opts: ["At the highest point of the curve", "At either end of the curve", "At the lowest point — the bottom of the curve", "Anywhere on the curve equally"],
+      correct: 2,
+      explanation: "Correct! The best w is at the minimum of the cost curve — the very bottom. That is the point where average prediction error is smallest, meaning the model fits the training data as well as possible."
+    }
+  ],
+  9: [
+    {
+      q: "What is overfitting?",
+      opts: ["When a model is too simple to learn anything", "When a model performs perfectly on training data but fails on new unseen data", "When training takes too long", "When you use too many features"],
+      correct: 1,
+      explanation: "Correct! Overfitting happens when a model memorises the training data instead of learning the underlying pattern. It scores well on training rows but poorly on any new data it hasn't seen."
+    },
+    {
+      q: "Why is the test set error the most trustworthy measure of model performance?",
+      opts: ["Because it uses more data points", "Because the model has never seen test data, so it cannot have memorised the answers", "Because test errors are always lower than training errors", "Because test data is cleaner than training data"],
+      correct: 1,
+      explanation: "Correct! The test set gives an honest, unbiased measure because the model had no access to it during training. Any good performance on the test set must come from genuinely learning the pattern."
+    }
+  ],
+  10: [
+    {
+      q: "Which of the following correctly maps a pipeline step to its ML term?",
+      opts: ["Trying different w values → Cost function", "Average error → Optimisation", "Held-back patient rows → Test set", "Age column → Label"],
+      correct: 2,
+      explanation: "Correct! The held-back patient rows that the model never sees during training are the test set. Note: trying w values = parameter search; average error = cost function; age column = feature (not label)."
+    },
+    {
+      q: "What is the most important thing you can take away from this pipeline walkthrough?",
+      opts: ["You need to know advanced maths to do ML", "Every ML project requires a specific named algorithm from the start", "The pipeline — problem, data, model, train, evaluate — is the same skeleton for every ML system", "ML only works for medical data"],
+      correct: 2,
+      explanation: "Correct! The pipeline structure (task → data → model → train → evaluate) is universal. Whether you're predicting blood pressure or detecting tumours, the skeleton is identical. Algorithms and data change; the pipeline doesn't."
+    }
+  ]
+};
+
+// ── render MCQs ──────────────────────────────────────────
+function renderMCQ(slideNum) {
+  const container = document.getElementById('mcq-' + slideNum);
+  if (!container || container.dataset.rendered) return;
+  container.dataset.rendered = '1';
+
+  const qs = QUESTIONS[slideNum];
+  if (!qs) return;
+
+  container.innerHTML = '';
+
+  const secLabel = document.createElement('div');
+  secLabel.className = 'mcq-section-label';
+  secLabel.textContent = 'Check your understanding';
+  container.appendChild(secLabel);
+
+  qs.forEach((q, qi) => {
+    const block = document.createElement('div');
+    block.className = 'mcq-block';
+
+    const num = document.createElement('div');
+    num.className = 'mcq-q-num';
+    num.textContent = 'Question ' + (qi + 1);
+    block.appendChild(num);
+
+    const qText = document.createElement('div');
+    qText.className = 'mcq-question';
+    qText.textContent = q.q;
+    block.appendChild(qText);
+
+    const opts = document.createElement('div');
+    opts.className = 'mcq-options';
+
+    const letters = ['A', 'B', 'C', 'D'];
+    const feedback = document.createElement('div');
+    feedback.className = 'mcq-feedback';
+
+    q.opts.forEach((optText, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'mcq-opt';
+      btn.innerHTML = '<span class="opt-letter">' + letters[oi] + '</span>' + optText;
+      btn.onclick = () => {
+        // disable all
+        opts.querySelectorAll('.mcq-opt').forEach(b => { b.disabled = true; });
+
+        if (oi === q.correct) {
+          btn.classList.add('correct');
+          feedback.className = 'mcq-feedback correct-fb show';
+          feedback.innerHTML = '<span class="fb-icon">✓ Correct!</span> ' + q.explanation;
+        } else {
+          btn.classList.add('wrong');
+          feedback.className = 'mcq-feedback wrong-fb show';
+          const correctBtn = opts.querySelectorAll('.mcq-opt')[q.correct];
+          correctBtn.classList.add('reveal-correct');
+          feedback.innerHTML = '<span class="fb-icon">✗ Not quite.</span> The correct answer is <strong>' + letters[q.correct] + '</strong>. ' + q.explanation;
+        }
+      };
+      opts.appendChild(btn);
+    });
+
+    block.appendChild(opts);
+    block.appendChild(feedback);
+    container.appendChild(block);
+  });
+}
+
+// ── navigation ───────────────────────────────────────────
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 1 || next > TOTAL) return;
+  document.getElementById('slide-' + current).classList.remove('active');
+  current = next;
+  document.getElementById('slide-' + current).classList.add('active');
+  updateUI();
+  renderMCQ(current);
+  if (current === 4) drawStaticScatter();
+  if (current === 6) drawCandidates();
+  if (current === 7) { updateErrorTable(); drawInteractive(); drawCostCurve(); }
+  if (current === 8) drawFullCost();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateUI() {
+  document.getElementById('prog-label').textContent = 'Slide ' + current + ' of ' + TOTAL;
+  document.getElementById('prog-fill').style.width = (current / TOTAL * 100) + '%';
+  document.getElementById('nav-info').innerHTML = 'Slide <strong>' + current + '</strong> of ' + TOTAL;
+  document.getElementById('btn-prev').disabled = current === 1;
+  document.getElementById('btn-next').disabled = current === TOTAL;
+  document.querySelectorAll('.progress-dot').forEach((d, i) => {
+    d.classList.toggle('active', i + 1 === current);
+    d.classList.toggle('done', i + 1 < current);
+  });
+}
+
+// build dots
+const dotsWrap = document.getElementById('prog-dots');
+for (let i = 1; i <= TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'progress-dot' + (i === 1 ? ' active' : '');
+  d.onclick = () => { const diff = i - current; if (diff !== 0) navigate(diff); };
+  dotsWrap.appendChild(d);
+}
+
+// render MCQs for slide 1 on load
+renderMCQ(1);
+
+// ── drawing helpers ──────────────────────────────────────
+const data = [
+  { patient:'P1', age:30, bp:115 },
+  { patient:'P2', age:50, bp:130 },
+  { patient:'P3', age:70, bp:150 }
+];
+
+const AGES = [30, 50, 70];
+const BPS  = [115, 130, 150];
+const TEAL = '#1D9E75';
+const PURPLE = '#7F77DD';
+const RED = '#E24B4A';
+const GRAY = '#888780';
+
+function plotSetup(canvas, minAge, maxAge, minBP, maxBP) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { l: 44, r: 16, t: 12, b: 36 };
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '11px DM Mono, monospace';
+  ctx.fillStyle = '#888780';
+  const toX = a => pad.l + (a - minAge) / (maxAge - minAge) * (W - pad.l - pad.r);
+  const toY = b => pad.t + (1 - (b - minBP) / (maxBP - minBP)) * (H - pad.t - pad.b);
+  ctx.strokeStyle = '#E8E6DE'; ctx.lineWidth = 1;
+  [100,110,120,130,140,150,160].forEach(bp => {
+    if (bp < minBP || bp > maxBP) return;
+    ctx.beginPath(); ctx.moveTo(pad.l, toY(bp)); ctx.lineTo(W-pad.r, toY(bp)); ctx.stroke();
+    ctx.fillText(bp, 2, toY(bp)+4);
+  });
+  [20,30,40,50,60,70,80].forEach(age => {
+    if (age < minAge || age > maxAge) return;
+    ctx.beginPath(); ctx.moveTo(toX(age), pad.t); ctx.lineTo(toX(age), H-pad.b); ctx.stroke();
+    ctx.fillText(age, toX(age)-8, H-pad.b+14);
+  });
+  ctx.fillStyle = '#5F5E5A';
+  ctx.fillText('BP', 2, pad.t-2);
+  ctx.fillText('Age', W/2-10, H-2);
+  return { ctx, W, H, pad, toX, toY };
+}
+
+function drawDots(ctx, toX, toY, color) {
+  AGES.forEach((age, i) => {
+    ctx.beginPath(); ctx.arc(toX(age), toY(BPS[i]), 6, 0, Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+  });
+}
+
+function drawLine(ctx, w, toX, toY, minAge, maxAge, color, label) {
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(toX(minAge), toY(w*minAge)); ctx.lineTo(toX(maxAge), toY(w*maxAge)); ctx.stroke();
+  if (label) { ctx.fillStyle = color; ctx.font = '11px DM Mono, monospace'; ctx.fillText('w='+label, toX(maxAge)-36, toY(w*maxAge)-6); }
+}
+
+function drawStaticScatter() {
+  const canvas = document.getElementById('scatter-static');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 40 || 320;
+  const { ctx, toX, toY } = plotSetup(canvas, 20, 80, 95, 165);
+  drawDots(ctx, toX, toY, TEAL);
+  ctx.font = '11px DM Sans, sans-serif';
+  AGES.forEach((age, i) => { ctx.fillStyle = '#085041'; ctx.fillText('P'+(i+1), toX(age)+8, toY(BPS[i])+4); });
+}
+
+function drawCandidates() {
+  const canvas = document.getElementById('scatter-candidates');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 40 || 740;
+  const { ctx, toX, toY } = plotSetup(canvas, 20, 80, 50, 200);
+  drawLine(ctx, 0.5, toX, toY, 20, 80, RED, '0.5');
+  drawLine(ctx, 1.0, toX, toY, 20, 80, TEAL, '1.0');
+  ctx.strokeStyle = '#E24B4A'; ctx.setLineDash([5,4]); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(toX(20), toY(2.0*20)); ctx.lineTo(toX(80), toY(2.0*80)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#E24B4A'; ctx.font = '11px DM Mono, monospace'; ctx.fillText('w=2.0', toX(80)-36, toY(2.0*80)-6);
+  drawDots(ctx, toX, toY, PURPLE);
+}
+
+function getW() { return parseFloat(document.getElementById('w-slider').value); }
+
+function updateErrorTable() {
+  const w = getW();
+  document.getElementById('w-val').textContent = w.toFixed(1);
+  const tbody = document.getElementById('error-tbody');
+  let totalErr = 0;
+  tbody.innerHTML = '';
+  data.forEach(d => {
+    const pred = w * d.age, err = Math.abs(pred - d.bp);
+    totalErr += err;
+    const isGood = err < 15;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${d.patient}</td><td>${d.age}</td><td>${d.bp}</td><td>${pred.toFixed(1)}</td><td class="${isGood?'error-good':'error-highlight'}">${err.toFixed(1)}</td>`;
+    tbody.appendChild(tr);
+  });
+  const avg = totalErr / data.length;
+  const avgEl = document.getElementById('avg-error');
+  avgEl.textContent = avg.toFixed(1);
+  avgEl.className = avg < 15 ? 'error-good' : 'error-highlight';
+}
+
+function drawInteractive() {
+  const canvas = document.getElementById('scatter-interactive');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 40 || 360;
+  const w = getW();
+  const { ctx, toX, toY } = plotSetup(canvas, 20, 80, 50, 200);
+  drawLine(ctx, w, toX, toY, 20, 80, TEAL, w.toFixed(1));
+  ctx.strokeStyle = RED; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]);
+  data.forEach(d => { ctx.beginPath(); ctx.moveTo(toX(d.age), toY(d.bp)); ctx.lineTo(toX(d.age), toY(w*d.age)); ctx.stroke(); });
+  ctx.setLineDash([]);
+  drawDots(ctx, toX, toY, PURPLE);
+}
+
+function calcCost(w) { return data.reduce((s,d) => s + Math.abs(w*d.age - d.bp), 0) / data.length; }
+
+function drawCostCurve() {
+  const canvas = document.getElementById('cost-curve');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 40 || 360;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { l:44, r:16, t:12, b:36 };
+  ctx.clearRect(0,0,W,H);
+  const wVals = [], costs = [];
+  for (let wv=0.1; wv<=3.0; wv+=0.05) { wVals.push(parseFloat(wv.toFixed(2))); costs.push(calcCost(wv)); }
+  const maxC = Math.max(...costs);
+  const toX = wv => pad.l + (wv-0.1)/2.9*(W-pad.l-pad.r);
+  const toY = c => pad.t + (1-c/(maxC*1.1))*(H-pad.t-pad.b);
+  ctx.strokeStyle='#E8E6DE'; ctx.lineWidth=1; ctx.font='11px DM Mono,monospace'; ctx.fillStyle='#888780';
+  [0,20,40,60,80].forEach(c => { ctx.beginPath(); ctx.moveTo(pad.l,toY(c)); ctx.lineTo(W-pad.r,toY(c)); ctx.stroke(); ctx.fillText(c,2,toY(c)+4); });
+  [0.5,1.0,1.5,2.0,2.5,3.0].forEach(wv => { ctx.beginPath(); ctx.moveTo(toX(wv),pad.t); ctx.lineTo(toX(wv),H-pad.b); ctx.stroke(); ctx.fillText(wv.toFixed(1),toX(wv)-10,H-pad.b+14); });
+  ctx.strokeStyle=GRAY; ctx.lineWidth=2;
+  ctx.beginPath();
+  wVals.forEach((wv,i) => i===0 ? ctx.moveTo(toX(wv),toY(costs[i])) : ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.stroke();
+  const curW=getW(), curC=calcCost(curW);
+  ctx.beginPath(); ctx.arc(toX(curW),toY(curC),6,0,Math.PI*2); ctx.fillStyle=TEAL; ctx.fill();
+  ctx.fillStyle='#5F5E5A'; ctx.fillText('Cost',2,pad.t-2); ctx.fillText('w',W/2,H-2);
+}
+
+function drawFullCost() {
+  const canvas = document.getElementById('cost-full');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 40 || 740;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { l:48, r:24, t:16, b:40 };
+  ctx.clearRect(0,0,W,H);
+  const wVals=[], costs=[];
+  for (let wv=0.1; wv<=3.5; wv+=0.05) { wVals.push(parseFloat(wv.toFixed(2))); costs.push(calcCost(wv)); }
+  const maxC=Math.max(...costs), minC=Math.min(...costs);
+  const bestW=wVals[costs.indexOf(minC)];
+  const toX = wv => pad.l+(wv-0.1)/3.4*(W-pad.l-pad.r);
+  const toY = c => pad.t+(1-(c-0)/(maxC*1.05))*(H-pad.t-pad.b);
+  ctx.font='11px DM Mono,monospace'; ctx.fillStyle='#888780'; ctx.strokeStyle='#E8E6DE'; ctx.lineWidth=1;
+  [0,20,40,60,80].forEach(c => { ctx.beginPath(); ctx.moveTo(pad.l,toY(c)); ctx.lineTo(W-pad.r,toY(c)); ctx.stroke(); ctx.fillText(c,4,toY(c)+4); });
+  [0.5,1.0,1.5,2.0,2.5,3.0,3.5].forEach(wv => { ctx.beginPath(); ctx.moveTo(toX(wv),pad.t); ctx.lineTo(toX(wv),H-pad.b); ctx.stroke(); ctx.fillText(wv.toFixed(1),toX(wv)-10,H-pad.b+14); });
+  ctx.beginPath(); ctx.moveTo(toX(wVals[0]),toY(0));
+  wVals.forEach((wv,i) => ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.lineTo(toX(wVals[wVals.length-1]),toY(0)); ctx.closePath(); ctx.fillStyle='rgba(29,158,117,0.07)'; ctx.fill();
+  ctx.strokeStyle=TEAL; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  wVals.forEach((wv,i) => i===0?ctx.moveTo(toX(wv),toY(costs[i])):ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.stroke();
+  ctx.beginPath(); ctx.arc(toX(bestW),toY(minC),8,0,Math.PI*2); ctx.fillStyle=TEAL; ctx.fill();
+  ctx.fillStyle='white'; ctx.font='10px DM Sans,sans-serif'; ctx.fillText('★',toX(bestW)-5,toY(minC)+4);
+  ctx.strokeStyle=GRAY; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(toX(bestW),toY(minC)); ctx.lineTo(toX(bestW),H-pad.b); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#085041'; ctx.font='12px DM Sans,sans-serif';
+  ctx.fillText('Best w ≈ '+bestW.toFixed(1), toX(bestW)+10, toY(minC)+5);
+  ctx.fillStyle='#5F5E5A'; ctx.font='11px DM Mono,monospace';
+  ctx.fillText('Avg error',4,pad.t-2); ctx.fillText('w',W/2,H-4);
+}
+
+const slider = document.getElementById('w-slider');
+if (slider) {
+  slider.addEventListener('input', () => { updateErrorTable(); drawInteractive(); drawCostCurve(); });
+}
+</script>
+</body>
+</html>
