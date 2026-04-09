@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI & Machine Learning — Course Materials</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal:        #0D9E75;
+    --teal-dark:   #085041;
+    --teal-light:  #9FE1CB;
+    --teal-pale:   #E1F5EE;
+    --purple:      #7B6FD0;
+    --purple-pale: #EEEDFE;
+    --amber:       #E09B25;
+    --amber-pale:  #FAEEDA;
+    --coral:       #D85A30;
+    --coral-pale:  #FAECE7;
+    --bg:          #F2F0E8;
+    --card:        #FFFFFF;
+    --ink:         #0D1B2A;
+    --ink-2:       #3A4A5A;
+    --ink-3:       #6B7A8D;
+    --rule:        #DDD9CE;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(242,240,232,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule);
+    padding: 0 40px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--teal-dark);
+    letter-spacing: 0.04em;
+    text-decoration: none;
+  }
+  .nav-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 3px 10px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 72px 40px 48px;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 2px;
+    background: var(--teal);
+  }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+  .hero-title span { color: var(--teal); }
+  .hero-sub {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    max-width: 580px;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    max-width: 900px;
+    margin: 0 auto 56px;
+    padding: 0 40px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--teal-dark);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 4px;
+  }
+  .stat-sep {
+    width: 1px;
+    background: var(--rule);
+    align-self: stretch;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+  .section-heading {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-heading::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .tool-card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    animation: cardIn 0.5s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--teal));
+    border-radius: 16px 16px 0 0;
+  }
+  .tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    border-color: var(--card-accent, var(--teal));
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tool-card:nth-child(1) { animation-delay: 0.05s; }
+  .tool-card:nth-child(2) { animation-delay: 0.12s; }
+  .tool-card:nth-child(3) { animation-delay: 0.19s; }
+  .tool-card:nth-child(4) { animation-delay: 0.26s; }
+  .tool-card:nth-child(5) { animation-delay: 0.33s; }
+
+  .card-topic {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--card-accent, var(--teal));
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+  .card-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink-3);
+    flex: 1;
+    margin-bottom: 18px;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .card-tag {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--tag-bg, var(--teal-pale));
+    color: var(--tag-color, var(--teal-dark));
+  }
+  .card-arrow {
+    font-size: 18px;
+    color: var(--card-accent, var(--teal));
+    opacity: 0.6;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .tool-card:hover .card-arrow { opacity: 1; transform: translateX(4px); }
+
+  /* ── HOW TO ADD ── */
+  .how-box {
+    background: var(--ink);
+    border-radius: 16px;
+    padding: 32px 36px;
+    color: white;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 16px;
+  }
+  .how-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+  }
+  .how-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .how-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--teal);
+    background: rgba(13,158,117,0.15);
+    border-radius: 4px;
+    padding: 3px 7px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .how-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+  }
+  .how-text strong { color: white; font-weight: 500; }
+  .how-code {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--teal-light);
+    line-height: 1.8;
+  }
+  .how-code .comment { color: rgba(255,255,255,0.3); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  footer span { color: var(--teal); }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 20px; }
+    .hero, .stats-row, .section { padding-left: 20px; padding-right: 20px; }
+    .hero { padding-top: 40px; }
+    .how-box { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .stats-row { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">AI &amp; ML Course</a>
+  <span class="nav-tag">Interactive Materials</span>
+</nav>
+
+<div class="hero">
+  <p class="hero-eyebrow">Undergraduate &amp; Graduate</p>
+  <h1 class="hero-title">Machine Learning<br><span>Course Tools</span></h1>
+  <p class="hero-sub">Interactive slide decks and learning tools. Each module covers one concept — open it, read through the slides, and answer the questions at the bottom of each page.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><span class="stat-val">2</span><span class="stat-label">Modules available</span></div>
+  <div class="stat-sep"></div>
+  <div class="stat"><span class="stat-val">20</span><span class="stat-label">Check-your-understanding questions</span></div>
+  <div class="stat-sep"></div>
+  <div class="stat"><span class="stat-val">0</span><span class="stat-label">Downloads needed</span></div>
+</div>
+
+<div class="section">
+  <p class="section-heading">Available modules</p>
+
+  <div class="cards-grid">
+
+    <!-- Card 1 -->
+    <a class="tool-card" href="ml-pipeline-mcq.html" style="--card-accent:#0D9E75; --tag-bg:#E1F5EE; --tag-color:#085041;">
+      <p class="card-topic">Supervised Learning</p>
+      <h2 class="card-title">The ML Pipeline</h2>
+      <p class="card-desc">Walk through a complete machine learning pipeline — from clinical problem to evaluation — using age and blood pressure as a running example. No code required.</p>
+      <div class="card-meta">
+        <div class="card-tags">
+          <span class="card-tag">10 slides</span>
+          <span class="card-tag">20 MCQs</span>
+          <span class="card-tag">Interactive</span>
+        </div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Card 2 -->
+   
+
+    <!-- Placeholder card -->
+    <div class="tool-card" style="--card-accent:#D3D1C7; border-style: dashed; cursor: default; opacity: 0.6;">
+      <p class="card-topic" style="color:#888780;">Coming soon</p>
+      <h2 class="card-title" style="color:#888780;">Next module</h2>
+      <p class="card-desc">The next interactive module will appear here once it is added to the repository.</p>
+      <div class="card-meta">
+        <div class="card-tags">
+          <span class="card-tag" style="background:#F1EFE8; color:#888780;">Upcoming</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="padding-top:0;">
+  <p class="section-heading">How to add a new module</p>
+  <div class="how-box">
+    <div>
+      <p class="how-title">Three steps every time</p>
+      <div class="how-step">
+        <span class="how-num">01</span>
+        <p class="how-text">Upload your new <strong>.html file</strong> to the root of this GitHub repository — drag and drop in the browser.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-num">02</span>
+        <p class="how-text">Open <strong>index.html</strong>, copy an existing card block, and update the title, description, href, and tags.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-num">03</span>
+        <p class="how-text">Update the <strong>module count</strong> in the stats row at the top. Commit — it's live in about 60 seconds.</p>
+      </div>
+    </div>
+    <div>
+      <p class="how-title">Card template to copy</p>
+      <div class="how-code">
+<span class="comment">&lt;!-- Copy this block for each new tool --&gt;</span>
+&lt;a class="tool-card"
+   href="<span style="color:#FAC775">your-file.html</span>"
+   style="--card-accent:<span style="color:#FAC775">#E09B25</span>;"&gt;
+
+  &lt;p class="card-topic"&gt;<span style="color:#FAC775">Topic Area</span>&lt;/p&gt;
+  &lt;h2 class="card-title"&gt;<span style="color:#FAC775">Module Title</span>&lt;/h2&gt;
+  &lt;p class="card-desc"&gt;<span style="color:#FAC775">Short description...</span>&lt;/p&gt;
+
+  &lt;div class="card-meta"&gt;
+    &lt;div class="card-tags"&gt;
+      &lt;span class="card-tag"&gt;<span style="color:#FAC775">N slides</span>&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class="card-arrow"&gt;→&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/a&gt;</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built for teaching &nbsp;·&nbsp; <span>AI &amp; Machine Learning</span> &nbsp;·&nbsp; Open in any browser
+</footer>
+
+</body>
+</html>
