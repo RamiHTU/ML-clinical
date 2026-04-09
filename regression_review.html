@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Linear Regression — Self-Study Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+    --purple-50: #EEEDFE; --purple-100: #CECBF6; --purple-400: #7F77DD; --purple-600: #534AB7; --purple-800: #3C3489;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-400: #EF9F27; --amber-600: #854F0B; --amber-800: #633806;
+    --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-400: #D85A30; --coral-600: #993C1D;
+    --green-50: #EDFAF3; --green-400: #22C55E; --green-700: #15803D;
+    --red-50: #FEF2F2; --red-400: #EF4444; --red-700: #B91C1C;
+    --gray-50: #F8F8F6; --gray-100: #F1EFE8; --gray-200: #D3D1C7; --gray-400: #888780; --gray-600: #5F5E5A; --gray-800: #2C2C2A;
+    --bg: #F4F2EC;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body { font-family: var(--font); background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; color: var(--gray-800); }
+
+  /* ── progress ── */
+  .top-bar { background: white; border-bottom: 1px solid var(--gray-200); padding: 12px 32px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+  .top-label { font-size: 12px; font-weight: 500; color: var(--gray-600); white-space: nowrap; }
+  .prog-track { flex: 1; height: 4px; background: var(--gray-200); border-radius: 999px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--teal-400); border-radius: 999px; transition: width 0.4s ease; }
+  .prog-dots { display: flex; gap: 6px; }
+  .prog-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); cursor: pointer; transition: background 0.2s; }
+  .prog-dot.active { background: var(--teal-400); }
+  .prog-dot.done { background: var(--teal-100); }
+
+  /* ── slides ── */
+  .slides-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 24px 100px; }
+  .slide { display: none; width: 100%; max-width: 840px; animation: fadeIn 0.3s ease; }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── slide header ── */
+  .slide-hdr { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 22px; }
+  .slide-badge { background: var(--teal-800); color: white; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; white-space: nowrap; margin-top: 3px; }
+  .slide-meta { flex: 1; }
+  .slide-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; }
+  .tag-ml { background: var(--purple-100); color: var(--purple-800); }
+  .tag-key { background: var(--amber-100); color: var(--amber-800); }
+  .slide-title { font-size: 26px; font-weight: 600; color: var(--gray-800); line-height: 1.2; }
+
+  /* ── section label ── */
+  .sec-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-600); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--teal-100); }
+
+  /* ── cards ── */
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px 24px; margin-bottom: 14px; }
+  .card-teal { background: var(--teal-50); border-color: var(--teal-100); }
+  .card-purple { background: var(--purple-50); border-color: var(--purple-100); }
+  .card-amber { background: var(--amber-50); border-color: var(--amber-100); }
+  .card-coral { background: var(--coral-50); border-color: var(--coral-100); }
+  .card p { font-size: 14px; line-height: 1.75; color: var(--gray-600); }
+  .card p + p { margin-top: 8px; }
+  .card strong { color: var(--gray-800); font-weight: 500; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .three-col { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin-bottom: 14px; }
+
+  /* ── callout ── */
+  .callout { border-left: 3px solid var(--teal-400); background: var(--teal-50); border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: var(--teal-800); line-height: 1.65; }
+  .callout-amber { border-color: var(--amber-400); background: var(--amber-50); color: var(--amber-800); }
+  .callout-purple { border-color: var(--purple-400); background: var(--purple-50); color: var(--purple-800); }
+
+  /* ── formula ── */
+  .formula-big { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--teal-800); background: var(--teal-50); border: 1px solid var(--teal-100); border-radius: 12px; padding: 20px 28px; text-align: center; margin: 16px 0; letter-spacing: 0.02em; }
+  .formula-big .term { cursor: pointer; border-radius: 6px; padding: 2px 6px; transition: background 0.15s; position: relative; }
+  .formula-big .term:hover { background: rgba(29,158,117,0.15); }
+  .formula-big .term.w-term { color: var(--coral-400); }
+  .formula-big .term.b-term { color: var(--purple-600); }
+  .formula-big .term.x-term { color: var(--teal-600); }
+  .formula-big .term.y-term { color: var(--amber-600); }
+
+  .term-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+  .term-card { border-radius: 10px; padding: 14px 16px; border: 1px solid transparent; }
+  .term-card .tc-sym { font-family: var(--mono); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .term-card .tc-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .term-card .tc-desc { font-size: 12px; line-height: 1.6; }
+  .tc-w { background: var(--coral-50); border-color: var(--coral-100); }
+  .tc-w .tc-sym { color: var(--coral-400); }
+  .tc-w .tc-name { color: var(--coral-600); }
+  .tc-w .tc-desc { color: var(--coral-600); }
+  .tc-b { background: var(--purple-50); border-color: var(--purple-100); }
+  .tc-b .tc-sym { color: var(--purple-600); }
+  .tc-b .tc-name { color: var(--purple-800); }
+  .tc-b .tc-desc { color: var(--purple-800); }
+  .tc-x { background: var(--teal-50); border-color: var(--teal-100); }
+  .tc-x .tc-sym { color: var(--teal-600); }
+  .tc-x .tc-name { color: var(--teal-800); }
+  .tc-x .tc-desc { color: var(--teal-800); }
+  .tc-y { background: var(--amber-50); border-color: var(--amber-100); }
+  .tc-y .tc-sym { color: var(--amber-600); }
+  .tc-y .tc-name { color: var(--amber-800); }
+  .tc-y .tc-desc { color: var(--amber-800); }
+
+  /* ── sliders ── */
+  .slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .slider-label { font-size: 13px; color: var(--gray-600); min-width: 100px; }
+  input[type=range] { flex: 1; accent-color: var(--teal-400); cursor: pointer; }
+  .slider-val { font-family: var(--mono); font-size: 16px; font-weight: 500; min-width: 44px; text-align: right; }
+  .sv-w { color: var(--coral-400); }
+  .sv-b { color: var(--purple-600); }
+
+  /* ── canvas plots ── */
+  canvas { display: block; }
+  .plot-wrap { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .plot-title { font-size: 12px; font-weight: 500; color: var(--gray-600); margin-bottom: 10px; text-align: center; letter-spacing: 0.03em; }
+
+  /* ── error table ── */
+  .err-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--mono); margin-bottom: 0; }
+  .err-table th { background: var(--gray-100); color: var(--gray-600); padding: 8px 12px; text-align: right; font-size: 11px; letter-spacing: 0.04em; border-bottom: 1px solid var(--gray-200); }
+  .err-table th:first-child { text-align: left; }
+  .err-table td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); }
+  .err-table td:first-child { text-align: left; color: var(--gray-600); }
+  .err-table .total td { background: var(--teal-50); font-weight: 500; color: var(--teal-800); border-top: 1px solid var(--teal-100); border-bottom: none; }
+  .err-hi { color: #E24B4A; }
+  .err-ok { color: var(--teal-600); }
+
+  /* ── metric cards ── */
+  .metric-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; }
+  .metric-title { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
+  .metric-full { font-size: 15px; font-weight: 500; color: var(--gray-800); margin-bottom: 8px; }
+  .metric-formula { font-family: var(--mono); font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
+  .metric-desc { font-size: 13px; line-height: 1.65; color: var(--gray-600); margin-bottom: 8px; }
+  .metric-example { font-size: 12px; padding: 8px 12px; border-radius: 6px; font-family: var(--mono); }
+
+  /* ── MCQ ── */
+  .mcq-section { margin-top: 28px; border-top: 2px dashed var(--gray-200); padding-top: 24px; }
+  .mcq-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--purple-600); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .mcq-label::after { content: ''; flex: 1; height: 1px; background: var(--purple-100); }
+  .mcq-block { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .mcq-qnum { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--purple-600); margin-bottom: 6px; }
+  .mcq-q { font-size: 15px; font-weight: 500; color: var(--gray-800); margin-bottom: 14px; line-height: 1.5; }
+  .mcq-opts { display: flex; flex-direction: column; gap: 8px; }
+  .mcq-opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--gray-200); background: var(--gray-50); cursor: pointer; font-size: 14px; color: var(--gray-800); text-align: left; font-family: var(--font); transition: border-color 0.15s, background 0.15s; line-height: 1.5; width: 100%; }
+  .mcq-opt:hover:not(:disabled) { border-color: var(--purple-100); background: var(--purple-50); }
+  .opt-letter { font-size: 11px; font-weight: 600; color: var(--purple-600); background: var(--purple-50); border-radius: 4px; padding: 2px 6px; flex-shrink: 0; margin-top: 1px; font-family: var(--mono); }
+  .mcq-opt.correct { border-color: var(--green-400); background: var(--green-50); color: var(--green-700); }
+  .mcq-opt.correct .opt-letter { background: #DCFCE7; color: var(--green-700); }
+  .mcq-opt.wrong { border-color: var(--red-400); background: var(--red-50); color: var(--red-700); }
+  .mcq-opt.wrong .opt-letter { background: #FEE2E2; color: var(--red-700); }
+  .mcq-opt.reveal { border-color: var(--green-400); background: var(--green-50); color: var(--green-700); opacity: 0.7; }
+  .mcq-opt.reveal .opt-letter { background: #DCFCE7; color: var(--green-700); }
+  .mcq-opt:disabled { cursor: default; }
+  .mcq-fb { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.65; }
+  .mcq-fb.correct-fb { background: var(--green-50); border: 1px solid var(--green-400); color: var(--green-700); }
+  .mcq-fb.wrong-fb { background: var(--red-50); border: 1px solid var(--red-400); color: var(--red-700); }
+  .mcq-fb.show { display: block; }
+  .fb-icon { font-weight: 600; margin-right: 4px; }
+
+  /* ── nav ── */
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; gap: 16px; }
+  .nav-btn { font-family: var(--font); font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-800); transition: all 0.15s; }
+  .nav-btn:hover { background: var(--gray-100); }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn.primary { background: var(--teal-800); color: white; border-color: var(--teal-800); }
+  .nav-btn.primary:hover { background: var(--teal-600); }
+  .nav-info { font-size: 13px; color: var(--gray-600); }
+  .nav-info strong { color: var(--gray-800); }
+
+  /* ── optimisation visual ── */
+  .opt-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .opt-box { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px; text-align: center; }
+  .opt-box.best { border-color: var(--teal-400); background: var(--teal-50); }
+  .opt-w { font-family: var(--mono); font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .opt-cost { font-size: 12px; color: var(--gray-600); margin-bottom: 10px; }
+
+  @media (max-width: 600px) {
+    .two-col, .three-col, .term-cards, .opt-compare { grid-template-columns: 1fr; }
+    .prog-dots { display: none; }
+    .slides-wrap { padding: 20px 16px 90px; }
+    .nav-bar { padding: 12px 16px; }
+    .formula-big { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="top-label" id="top-label">Slide 1 of 6</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:16.7%"></div></div>
+  <div class="prog-dots" id="prog-dots"></div>
+</div>
+
+<div class="slides-wrap">
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 1 — The clinical question
+═══════════════════════════════════════════════════════ -->
+<div class="slide active" id="slide-1">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 1</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: supervised learning</span>
+        <span class="tag tag-ml">ML term: regression</span>
+      </div>
+      <h1 class="slide-title">The clinical question</h1>
+    </div>
+  </div>
+  <div class="sec-label">What is simple linear regression?</div>
+
+  <div class="card card-teal">
+    <p style="font-size:18px; font-weight:500; color:var(--teal-800); margin-bottom:10px;">Can we predict a patient's systolic blood pressure from their age alone?</p>
+    <p>This is the question that motivates simple linear regression. We have one <strong>input</strong> (age) and one <strong>output</strong> (blood pressure), and we want to find a mathematical rule that maps one to the other.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <p><strong>Why "regression"?</strong></p>
+      <p>Regression is the family of ML models that predict a <strong>continuous number</strong> — like blood pressure, blood glucose, or cholesterol level. If the output were a category (disease / no disease), we would use classification instead.</p>
+    </div>
+    <div class="card">
+      <p><strong>Why "simple"?</strong></p>
+      <p>Simple linear regression uses exactly <strong>one input feature</strong> to make predictions. When we use two or more features — like age and BMI together — it becomes multiple regression.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The big idea:</strong> we assume there is a roughly linear relationship between age and blood pressure — that is, as age increases, BP increases at a roughly constant rate. The model learns that rate from past patient data.
+  </div>
+
+  <div class="card">
+    <p><strong>Feature vs label — a reminder</strong></p>
+    <p>The <strong>feature</strong> (also called the input or x) is what we give the model — in this case, a patient's age.<br>
+    The <strong>label</strong> (also called the target or y) is what we want to predict — in this case, systolic blood pressure.</p>
+  </div>
+
+  <div class="mcq-section" id="mcq-1"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 2 — The model equation
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-2">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 2</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: hypothesis function</span>
+        <span class="tag tag-ml">ML term: parameters</span>
+      </div>
+      <h1 class="slide-title">The model equation</h1>
+    </div>
+  </div>
+  <div class="sec-label">What does the model look like?</div>
+
+  <div class="callout">Click on any term in the formula below to see what it means.</div>
+
+  <div class="formula-big" id="formula-display">
+    <span class="term y-term" onclick="highlightTerm('y')">ŷ</span>
+    &nbsp;=&nbsp;
+    <span class="term w-term" onclick="highlightTerm('w')">w</span>
+    &nbsp;×&nbsp;
+    <span class="term x-term" onclick="highlightTerm('x')">age</span>
+    &nbsp;+&nbsp;
+    <span class="term b-term" onclick="highlightTerm('b')">b</span>
+  </div>
+
+  <div class="term-cards">
+    <div class="term-card tc-w" id="tc-w">
+      <div class="tc-sym">w</div>
+      <div class="tc-name">Coefficient (slope)</div>
+      <div class="tc-desc">How much BP changes for every 1-year increase in age. This is what the model learns from the data. Also called the weight or slope.</div>
+    </div>
+    <div class="term-card tc-b" id="tc-b">
+      <div class="tc-sym">b</div>
+      <div class="tc-name">Intercept (baseline)</div>
+      <div class="tc-desc">The predicted BP when age = 0. Not clinically meaningful on its own, but needed mathematically to position the line correctly.</div>
+    </div>
+    <div class="term-card tc-x" id="tc-x">
+      <div class="tc-sym">age</div>
+      <div class="tc-name">Feature (input)</div>
+      <div class="tc-desc">The value we give the model to make a prediction. In this case, a patient's age in years. Also written as x.</div>
+    </div>
+    <div class="term-card tc-y" id="tc-y">
+      <div class="tc-sym">ŷ</div>
+      <div class="tc-name">Predicted output</div>
+      <div class="tc-desc">The model's prediction of systolic BP. The hat (^) means it is an estimate, not the true measured value. Read as "y-hat".</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>Example:</strong> if the model learns w = 0.85 and b = 70, then for a patient aged 50:<br>
+    ŷ = 0.85 × 50 + 70 = 42.5 + 70 = <strong>112.5 mmHg</strong>
+  </div>
+
+  <div class="mcq-section" id="mcq-2"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 3 — What does w do?
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-3">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 3</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: parameter search</span>
+        <span class="tag tag-key">Interactive</span>
+      </div>
+      <h1 class="slide-title">What does w do?</h1>
+    </div>
+  </div>
+  <div class="sec-label">Feel how the parameters shape the line</div>
+
+  <div class="callout">Drag both sliders and watch the line update live. Notice how w controls the <strong>slope</strong> and b controls the <strong>height</strong> of the line.</div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="slider-row">
+      <span class="slider-label">w (slope)</span>
+      <input type="range" id="s3-w" min="0" max="3" step="0.05" value="1.0">
+      <span class="slider-val sv-w" id="s3-wval">1.00</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">b (intercept)</span>
+      <input type="range" id="s3-b" min="50" max="110" step="1" value="70">
+      <span class="slider-val sv-b" id="s3-bval">70</span>
+    </div>
+    <div style="font-family:var(--mono); font-size:14px; color:var(--teal-800); text-align:center; padding:8px 0 2px;">
+      BP = <span id="s3-weq" style="color:var(--coral-400)">1.00</span> × age + <span id="s3-beq" style="color:var(--purple-600)">70</span>
+    </div>
+  </div>
+
+  <div class="plot-wrap">
+    <p class="plot-title">Scatter plot — age vs BP with your regression line</p>
+    <canvas id="c3" height="260"></canvas>
+  </div>
+
+  <div class="two-col">
+    <div class="card card-coral" style="padding:14px 16px;">
+      <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--coral-600); margin-bottom:6px;">Effect of w</p>
+      <p style="font-size:13px; color:var(--coral-600);">A larger w = steeper slope. The line rises faster as age increases. A smaller w = flatter line.</p>
+    </div>
+    <div class="card card-purple" style="padding:14px 16px;">
+      <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--purple-600); margin-bottom:6px;">Effect of b</p>
+      <p style="font-size:13px; color:var(--purple-800);">A larger b shifts the entire line <strong>up</strong>. A smaller b shifts it <strong>down</strong>. The slope stays the same.</p>
+    </div>
+  </div>
+
+  <div class="mcq-section" id="mcq-3"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 4 — The cost function
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-4">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 4</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: cost function</span>
+        <span class="tag tag-ml">ML term: mean absolute error</span>
+        <span class="tag tag-key">Interactive</span>
+      </div>
+      <h1 class="slide-title">The cost function</h1>
+    </div>
+  </div>
+  <div class="sec-label">How do we measure how wrong the model is?</div>
+
+  <div class="callout">Drag w below and watch the error table and cost curve update live. Try to find the w that minimises the average error.</div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="slider-row">
+      <span class="slider-label">w (slope)</span>
+      <input type="range" id="s4-w" min="0.1" max="3.0" step="0.05" value="1.5">
+      <span class="slider-val sv-w" id="s4-wval">1.50</span>
+    </div>
+    <p style="font-size:12px; color:var(--gray-600); padding:0 4px;">b is fixed at 70 for simplicity. We are searching for the best w.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="card" style="padding:0; overflow:hidden; margin:0;">
+      <table class="err-table">
+        <thead>
+          <tr>
+            <th>Patient</th><th>Age</th><th>Actual BP</th><th>Predicted</th><th>Error</th>
+          </tr>
+        </thead>
+        <tbody id="s4-tbody"></tbody>
+        <tfoot>
+          <tr class="total">
+            <td colspan="4">Average error (cost)</td>
+            <td id="s4-avg"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="plot-wrap" style="margin:0;">
+      <p class="plot-title">Cost curve — error vs w</p>
+      <canvas id="c4-cost" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="callout callout-purple" style="margin-top:14px;">
+    <strong>The cost function</strong> is the formula for the average error. In this example we are using <strong>Mean Absolute Error (MAE)</strong>: the average of |predicted − actual| across all patients. The model's goal is to find the w that puts this number as low as possible.
+  </div>
+
+  <div class="mcq-section" id="mcq-4"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 5 — What the model learns (optimisation)
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-5">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 5</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: optimisation</span>
+        <span class="tag tag-ml">ML term: gradient descent</span>
+      </div>
+      <h1 class="slide-title">What the model learns</h1>
+    </div>
+  </div>
+  <div class="sec-label">Finding the best parameters automatically</div>
+
+  <div class="card card-teal">
+    <p><strong>Training is the process of finding the parameters (w and b) that produce the lowest possible cost.</strong></p>
+    <p>The model does not try every possible value of w by hand. Instead, it uses an algorithm called <strong>gradient descent</strong> — which follows the slope of the cost curve downward, step by step, until it reaches the bottom.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="plot-wrap" style="margin:0;">
+      <p class="plot-title">Cost curve — the model finds the minimum</p>
+      <canvas id="c5-cost" height="220"></canvas>
+    </div>
+    <div>
+      <div class="opt-compare">
+        <div class="opt-box">
+          <div class="opt-w" style="color:var(--red-400);">w = 0.3</div>
+          <div class="opt-cost">Cost ≈ 37.8 mmHg</div>
+          <canvas id="c5-bad" height="120"></canvas>
+          <p style="font-size:11px; color:var(--red-700); margin-top:6px;">Line too flat — misses older patients badly</p>
+        </div>
+        <div class="opt-box best">
+          <div class="opt-w" style="color:var(--teal-800);">w = 0.85</div>
+          <div class="opt-cost">Cost ≈ 6.2 mmHg</div>
+          <canvas id="c5-good" height="120"></canvas>
+          <p style="font-size:11px; color:var(--teal-600); margin-top:6px;">Best fit — line passes close to all points</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>Gradient descent in one sentence:</strong> start with a random w, check which direction the cost decreases, take a small step in that direction, repeat — until you reach the bottom of the cost curve. In scikit-learn, this happens automatically when you call <code style="font-family:var(--mono); font-size:12px;">model.fit()</code>.
+  </div>
+
+  <div class="mcq-section" id="mcq-5"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 6 — Evaluation metrics
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-6">
+  <div class="slide-hdr">
+    <span class="slide-badge">Slide 6</span>
+    <div class="slide-meta">
+      <div class="slide-tags">
+        <span class="tag tag-ml">ML term: MAE</span>
+        <span class="tag tag-ml">ML term: RMSE</span>
+        <span class="tag tag-ml">ML term: R²</span>
+      </div>
+      <h1 class="slide-title">Evaluation metrics</h1>
+    </div>
+  </div>
+  <div class="sec-label">How do we know if the model is any good?</div>
+
+  <div class="callout">We always evaluate on the <strong>test set</strong> — patients the model has never seen. These three metrics each answer a slightly different question.</div>
+
+  <div class="three-col">
+    <div class="metric-card">
+      <div class="metric-title" style="color:var(--teal-600);">MAE</div>
+      <div class="metric-full">Mean Absolute Error</div>
+      <div class="metric-formula" style="background:var(--teal-50); color:var(--teal-800);">avg( |ŷ − y| )</div>
+      <div class="metric-desc">The average size of prediction errors, in the same units as the target. Easy to interpret — if MAE = 8, predictions are off by 8 mmHg on average.</div>
+      <div class="metric-example" style="background:var(--teal-50); color:var(--teal-800);">Errors: 5, 9, 8<br>MAE = (5+9+8)/3 = 7.3 mmHg</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title" style="color:var(--purple-600);">RMSE</div>
+      <div class="metric-full">Root Mean Squared Error</div>
+      <div class="metric-formula" style="background:var(--purple-50); color:var(--purple-800);">√( avg( (ŷ−y)² ) )</div>
+      <div class="metric-desc">Similar to MAE but <strong>penalises large errors more</strong>. Because errors are squared, a single large miss hurts the score more than many small ones.</div>
+      <div class="metric-example" style="background:var(--purple-50); color:var(--purple-800);">Errors: 5, 9, 8<br>RMSE = √((25+81+64)/3) = 7.7 mmHg</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title" style="color:var(--amber-600);">R²</div>
+      <div class="metric-full">R-squared (R²)</div>
+      <div class="metric-formula" style="background:var(--amber-50); color:var(--amber-800);">1 − (SS_res / SS_tot)</div>
+      <div class="metric-desc">Proportion of BP variation the model explains. 0 = explains nothing, 1 = perfect. R² = 0.85 means the model explains 85% of variation in blood pressure.</div>
+      <div class="metric-example" style="background:var(--amber-50); color:var(--amber-800);">R² = 0.85<br>→ 85% of BP variation explained by age</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <p><strong>Which metric should you use?</strong></p>
+    <p>Use <strong>MAE</strong> when you want a simple, interpretable error in clinical units. Use <strong>RMSE</strong> when large errors are especially dangerous — for example, missing a high-risk patient by a lot is worse than missing many patients by a little. Use <strong>R²</strong> when you want to know how much of the outcome your features explain overall.</p>
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>Important:</strong> R² = 0.85 sounds good — but always ask <em>good compared to what?</em> A model predicting age → BP might score 0.85. But if a clinician can eyeball a scatter plot and do just as well, the model adds little value. Context always matters.
+  </div>
+
+  <div class="mcq-section" id="mcq-6"></div>
+</div>
+
+</div><!-- slides-wrap -->
+
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="nav(-1)" disabled>← Back</button>
+  <span class="nav-info" id="nav-info">Slide <strong>1</strong> of 6</span>
+  <button class="nav-btn primary" id="btn-next" onclick="nav(1)">Next →</button>
+</div>
+
+<script>
+// ── Data ────────────────────────────────────────────────
+const PTS = [
+  { p:'P1', age:30, bp:115 },
+  { p:'P2', age:50, bp:130 },
+  { p:'P3', age:70, bp:150 },
+];
+const ALL_AGES = [28,33,38,42,47,51,55,58,63,67,72,76];
+const ALL_BP   = [112,118,123,127,131,135,138,141,145,148,152,155];
+
+const TEAL='#1D9E75', PURPLE='#7F77DD', CORAL='#D85A30', GRAY='#888780', AMBER='#E09B25';
+
+// ── Navigation ──────────────────────────────────────────
+const TOTAL = 6;
+let cur = 1;
+
+const dotsWrap = document.getElementById('prog-dots');
+for (let i=1; i<=TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'prog-dot' + (i===1?' active':'');
+  d.id = 'dot-'+i;
+  d.onclick = () => goTo(i);
+  dotsWrap.appendChild(d);
+}
+
+function nav(dir) { goTo(Math.min(TOTAL, Math.max(1, cur+dir))); }
+
+function goTo(n) {
+  document.getElementById('slide-'+cur).classList.remove('active');
+  document.getElementById('dot-'+cur).className = 'prog-dot done';
+  cur = n;
+  document.getElementById('slide-'+cur).classList.add('active');
+  document.getElementById('dot-'+cur).className = 'prog-dot active';
+  document.getElementById('prog-fill').style.width = (cur/TOTAL*100)+'%';
+  document.getElementById('top-label').textContent = 'Slide '+cur+' of '+TOTAL;
+  document.getElementById('nav-info').innerHTML = 'Slide <strong>'+cur+'</strong> of '+TOTAL;
+  document.getElementById('btn-prev').disabled = cur===1;
+  document.getElementById('btn-next').disabled = cur===TOTAL;
+  renderMCQ(cur);
+  if (cur===3) { setTimeout(()=>{ initSlide3(); }, 50); }
+  if (cur===4) { setTimeout(()=>{ initSlide4(); }, 50); }
+  if (cur===5) { setTimeout(()=>{ initSlide5(); }, 50); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── Term highlight ──────────────────────────────────────
+function highlightTerm(t) {
+  ['w','b','x','y'].forEach(k => {
+    document.getElementById('tc-'+k).style.transform = k===t ? 'scale(1.03)' : '';
+    document.getElementById('tc-'+k).style.boxShadow = k===t ? '0 0 0 2px currentColor' : '';
+  });
+}
+
+// ── Plot helpers ────────────────────────────────────────
+function setupCanvas(id, h) {
+  const c = document.getElementById(id);
+  if (!c) return null;
+  c.width = c.parentElement.clientWidth - (id.startsWith('c5-bad')||id.startsWith('c5-good') ? 36 : 40) || 360;
+  c.height = h || 200;
+  return c;
+}
+
+function plotAxes(ctx, W, H, pad, minX, maxX, minY, maxY, xLabel, yLabel) {
+  ctx.clearRect(0,0,W,H);
+  ctx.font = '11px DM Mono,monospace';
+  ctx.fillStyle = GRAY;
+  ctx.strokeStyle = '#E8E6DE';
+  ctx.lineWidth = 1;
+  const toX = v => pad.l + (v-minX)/(maxX-minX)*(W-pad.l-pad.r);
+  const toY = v => pad.t + (1-(v-minY)/(maxY-minY))*(H-pad.t-pad.b);
+  // grid
+  [minY, (minY+maxY)/2, maxY].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(pad.l,toY(v)); ctx.lineTo(W-pad.r,toY(v)); ctx.stroke();
+    ctx.fillText(Math.round(v), 2, toY(v)+4);
+  });
+  [minX, (minX+maxX)/2, maxX].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(toX(v),pad.t); ctx.lineTo(toX(v),H-pad.b); ctx.stroke();
+    ctx.fillText(Math.round(v), toX(v)-8, H-pad.b+13);
+  });
+  ctx.fillStyle='#5F5E5A';
+  if (yLabel) ctx.fillText(yLabel, 2, pad.t-3);
+  if (xLabel) ctx.fillText(xLabel, W/2-12, H-2);
+  return { toX, toY };
+}
+
+function drawDataPts(ctx, toX, toY, ages, bps, r, color) {
+  ages.forEach((age,i) => {
+    ctx.beginPath(); ctx.arc(toX(age), toY(bps[i]), r||5, 0, Math.PI*2);
+    ctx.fillStyle = color||TEAL; ctx.fill();
+  });
+}
+
+function drawRegLine(ctx, w, b, toX, toY, minAge, maxAge, color) {
+  ctx.strokeStyle = color||CORAL; ctx.lineWidth=2.2; ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(toX(minAge), toY(w*minAge+b));
+  ctx.lineTo(toX(maxAge), toY(w*maxAge+b));
+  ctx.stroke();
+}
+
+// ── Slide 3 ─────────────────────────────────────────────
+let s3init = false;
+function initSlide3() {
+  if (s3init) { drawSlide3(); return; }
+  s3init = true;
+  document.getElementById('s3-w').addEventListener('input', drawSlide3);
+  document.getElementById('s3-b').addEventListener('input', drawSlide3);
+  drawSlide3();
+}
+
+function drawSlide3() {
+  const w = parseFloat(document.getElementById('s3-w').value);
+  const b = parseFloat(document.getElementById('s3-b').value);
+  document.getElementById('s3-wval').textContent = w.toFixed(2);
+  document.getElementById('s3-bval').textContent = b.toFixed(0);
+  document.getElementById('s3-weq').textContent = w.toFixed(2);
+  document.getElementById('s3-beq').textContent = b.toFixed(0);
+
+  const c = setupCanvas('c3', 260);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const pad = {l:44,r:16,t:12,b:36};
+  const {toX,toY} = plotAxes(ctx, c.width, c.height, pad, 20,80, 80,185, 'Age','BP');
+  drawDataPts(ctx, toX, toY, ALL_AGES, ALL_BP, 5, '#085041');
+  drawRegLine(ctx, w, b, toX, toY, 20, 80, CORAL);
+
+  // label on line
+  const lx = toX(72), ly = toY(w*72+b)-8;
+  ctx.font='11px DM Mono,monospace';
+  ctx.fillStyle=CORAL;
+  if (ly > 20) ctx.fillText(`w=${w.toFixed(1)}, b=${b.toFixed(0)}`, lx-70, ly);
+}
+
+// ── Slide 4 ─────────────────────────────────────────────
+let s4init = false;
+function initSlide4() {
+  if (s4init) { updateSlide4(); return; }
+  s4init = true;
+  document.getElementById('s4-w').addEventListener('input', updateSlide4);
+  updateSlide4();
+}
+
+function calcMAE(w, b) {
+  return PTS.reduce((s,pt) => s + Math.abs(w*pt.age+b - pt.bp), 0) / PTS.length;
+}
+
+function updateSlide4() {
+  const w = parseFloat(document.getElementById('s4-w').value);
+  const b = 70;
+  document.getElementById('s4-wval').textContent = w.toFixed(2);
+
+  // error table
+  const tbody = document.getElementById('s4-tbody');
+  tbody.innerHTML='';
+  let total=0;
+  PTS.forEach(pt => {
+    const pred = w*pt.age+b;
+    const err = Math.abs(pred-pt.bp);
+    total+=err;
+    const isOk = err<10;
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td>${pt.p}</td><td>${pt.age}</td><td>${pt.bp}</td><td>${pred.toFixed(1)}</td><td class="${isOk?'err-ok':'err-hi'}">${err.toFixed(1)}</td>`;
+    tbody.appendChild(tr);
+  });
+  const avg = total/PTS.length;
+  const avgEl = document.getElementById('s4-avg');
+  avgEl.textContent = avg.toFixed(2)+' mmHg';
+  avgEl.className = avg<10 ? 'err-ok':'err-hi';
+
+  // cost curve
+  const c = setupCanvas('c4-cost', 200);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const pad={l:44,r:16,t:12,b:36};
+  const wVals=[], costs=[];
+  for (let wv=0.1; wv<=3.0; wv+=0.05) { wVals.push(parseFloat(wv.toFixed(2))); costs.push(calcMAE(wv,70)); }
+  const maxC=Math.max(...costs);
+  const toX = wv=>pad.l+(wv-0.1)/2.9*(c.width-pad.l-pad.r);
+  const toY = cv=>pad.t+(1-cv/(maxC*1.1))*(c.height-pad.t-pad.b);
+
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.font='11px DM Mono,monospace'; ctx.fillStyle=GRAY;
+  ctx.strokeStyle='#E8E6DE'; ctx.lineWidth=1;
+  [0,20,40].forEach(cv=>{ ctx.beginPath(); ctx.moveTo(pad.l,toY(cv)); ctx.lineTo(c.width-pad.r,toY(cv)); ctx.stroke(); ctx.fillText(cv,2,toY(cv)+4); });
+  [0.5,1.0,1.5,2.0,2.5,3.0].forEach(wv=>{ ctx.beginPath(); ctx.moveTo(toX(wv),pad.t); ctx.lineTo(toX(wv),c.height-pad.b); ctx.stroke(); ctx.fillText(wv.toFixed(1),toX(wv)-10,c.height-pad.b+13); });
+
+  ctx.strokeStyle=GRAY; ctx.lineWidth=2;
+  ctx.beginPath();
+  wVals.forEach((wv,i)=>i===0?ctx.moveTo(toX(wv),toY(costs[i])):ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.stroke();
+
+  // current dot
+  const curC=calcMAE(w,70);
+  ctx.beginPath(); ctx.arc(toX(w),toY(curC),7,0,Math.PI*2);
+  ctx.fillStyle=CORAL; ctx.fill();
+
+  ctx.fillStyle='#5F5E5A';
+  ctx.fillText('Cost',2,pad.t-2);
+  ctx.fillText('w',c.width/2-4,c.height-2);
+}
+
+// ── Slide 5 ─────────────────────────────────────────────
+let s5init = false;
+function initSlide5() {
+  if (s5init) return;
+  s5init = true;
+  drawS5Cost();
+  drawS5Mini('c5-bad', 0.3, 70);
+  drawS5Mini('c5-good', 0.85, 70);
+}
+
+function drawS5Cost() {
+  const c = setupCanvas('c5-cost', 220);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const pad={l:44,r:24,t:16,b:40};
+  const wVals=[], costs=[];
+  for (let wv=0.05; wv<=3.0; wv+=0.05) { wVals.push(parseFloat(wv.toFixed(2))); costs.push(calcMAE(wv,70)); }
+  const maxC=Math.max(...costs), minC=Math.min(...costs);
+  const bestW=wVals[costs.indexOf(minC)];
+  const toX=wv=>pad.l+(wv-0.05)/2.95*(c.width-pad.l-pad.r);
+  const toY=cv=>pad.t+(1-cv/(maxC*1.05))*(c.height-pad.t-pad.b);
+
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.font='11px DM Mono,monospace'; ctx.fillStyle=GRAY;
+  ctx.strokeStyle='#E8E6DE'; ctx.lineWidth=1;
+  [0,15,30,45].forEach(cv=>{ ctx.beginPath(); ctx.moveTo(pad.l,toY(cv)); ctx.lineTo(c.width-pad.r,toY(cv)); ctx.stroke(); ctx.fillText(cv,2,toY(cv)+4); });
+  [0.5,1.0,1.5,2.0,2.5,3.0].forEach(wv=>{ ctx.beginPath(); ctx.moveTo(toX(wv),pad.t); ctx.lineTo(toX(wv),c.height-pad.b); ctx.stroke(); ctx.fillText(wv.toFixed(1),toX(wv)-10,c.height-pad.b+13); });
+
+  // gradient descent dots
+  const stepWs=[2.6,2.1,1.7,1.4,1.2,1.05,0.95,0.87,0.85];
+  stepWs.forEach((wv,i)=>{
+    const cv=calcMAE(wv,70);
+    ctx.beginPath(); ctx.arc(toX(wv),toY(cv),4,0,Math.PI*2);
+    ctx.fillStyle=`rgba(212,90,48,${0.3+i*0.08})`; ctx.fill();
+    if (i>0) {
+      const pwv=stepWs[i-1], pcv=calcMAE(pwv,70);
+      ctx.strokeStyle='rgba(212,90,48,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(toX(pwv),toY(pcv)); ctx.lineTo(toX(wv),toY(cv)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+
+  // fill
+  ctx.beginPath(); ctx.moveTo(toX(wVals[0]),toY(0));
+  wVals.forEach((wv,i)=>ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.lineTo(toX(wVals[wVals.length-1]),toY(0));
+  ctx.closePath(); ctx.fillStyle='rgba(29,158,117,0.06)'; ctx.fill();
+
+  // curve
+  ctx.strokeStyle=TEAL; ctx.lineWidth=2.5; ctx.setLineDash([]);
+  ctx.beginPath();
+  wVals.forEach((wv,i)=>i===0?ctx.moveTo(toX(wv),toY(costs[i])):ctx.lineTo(toX(wv),toY(costs[i])));
+  ctx.stroke();
+
+  // best marker
+  ctx.beginPath(); ctx.arc(toX(bestW),toY(minC),9,0,Math.PI*2);
+  ctx.fillStyle=TEAL; ctx.fill();
+  ctx.fillStyle='white'; ctx.font='11px DM Sans,sans-serif';
+  ctx.fillText('★',toX(bestW)-5,toY(minC)+4);
+
+  // dashed drop
+  ctx.strokeStyle=GRAY; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(toX(bestW),toY(minC)); ctx.lineTo(toX(bestW),c.height-pad.b); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='#085041'; ctx.font='11px DM Sans,sans-serif';
+  ctx.fillText('best w ≈ '+bestW.toFixed(2), toX(bestW)+10, toY(minC)+4);
+
+  ctx.fillStyle=GRAY; ctx.font='11px DM Mono,monospace';
+  ctx.fillText('Cost',2,pad.t-2); ctx.fillText('w',c.width/2,c.height-2);
+}
+
+function drawS5Mini(id, w, b) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.width = c.parentElement.clientWidth - 36 || 160;
+  c.height = 120;
+  const ctx = c.getContext('2d');
+  const pad={l:30,r:8,t:8,b:24};
+  const {toX,toY}=plotAxes(ctx,c.width,c.height,pad,20,80,80,185,'Age','');
+  drawDataPts(ctx,toX,toY,ALL_AGES,ALL_BP,3,'#085041');
+  drawRegLine(ctx,w,b,toX,toY,20,80,w<0.5?'#E24B4A':TEAL);
+}
+
+// ── MCQ data ────────────────────────────────────────────
+const QUESTIONS = {
+  1: [
+    {
+      q: "What type of output does a regression model produce?",
+      opts:["A category such as 'disease' or 'no disease'","A continuous number such as blood pressure or glucose level","A probability between 0 and 1","A ranked list of patients"],
+      correct:1,
+      explanation:"Correct! Regression predicts a continuous number — like mmHg, mmol/L, or kg. If the output were a category, we would use a classification model instead."
+    },
+    {
+      q: "In our blood pressure example, which is the feature and which is the label?",
+      opts:["Feature = blood pressure, Label = age","Both age and BP are features","Feature = age, Label = blood pressure","Feature = patient ID, Label = age"],
+      correct:2,
+      explanation:"Correct! The feature (input) is what we give the model — age. The label (target) is what we want the model to predict — blood pressure."
+    }
+  ],
+  2: [
+    {
+      q: "In the equation ŷ = w × age + b, what does w represent?",
+      opts:["The patient's weight in kg","The baseline blood pressure when age is zero","How much BP changes for every 1-year increase in age","The intercept of the line"],
+      correct:2,
+      explanation:"Correct! w is the coefficient — the slope of the line. It tells you how much the predicted BP changes for every 1-year increase in age. This is the value the model learns from data."
+    },
+    {
+      q: "If b increases from 70 to 90 while w stays the same, what happens to the regression line?",
+      opts:["It becomes steeper","It becomes flatter","It shifts upward — all predictions increase by 20","It shifts to the right"],
+      correct:2,
+      explanation:"Correct! b is the intercept. Increasing b shifts the entire line upward without changing its slope. All predictions increase by the same amount — in this case 20 mmHg."
+    }
+  ],
+  3: [
+    {
+      q: "You set w = 0 on the slider. What does the regression line look like?",
+      opts:["A steep upward-sloping line","A completely flat horizontal line — BP is the same for all ages","A downward-sloping line","No line appears at all"],
+      correct:1,
+      explanation:"Correct! When w = 0, the slope is zero, so ŷ = 0 × age + b = b for all ages. The line is completely flat — the model predicts the same BP regardless of the patient's age."
+    },
+    {
+      q: "You set w = 2.5 and notice the line is way above most data points for older patients. What does this mean?",
+      opts:["The model is underfitting","The model is predicting BP values that are too high for older patients — w is too large","The model is perfect","b needs to increase to compensate"],
+      correct:1,
+      explanation:"Correct! A w that is too large produces a line that is too steep — it over-predicts BP for older patients. This produces large errors and a high cost. The model needs a smaller w."
+    }
+  ],
+  4: [
+    {
+      q: "What does the cost function measure?",
+      opts:["The financial cost of running the model","The average difference between the model's predictions and the actual patient values","The number of parameters in the model","How long training takes"],
+      correct:1,
+      explanation:"Correct! The cost function measures how wrong the model currently is — specifically, the average size of the prediction errors across all training patients. Lower cost = better fitting model."
+    },
+    {
+      q: "On the cost curve, where should w be positioned to give the best model?",
+      opts:["At the far left of the curve where w is smallest","At the far right where w is largest","At the bottom of the curve — the point of minimum cost","Anywhere on the curve — they are all equally good"],
+      correct:2,
+      explanation:"Correct! The best w is at the bottom of the cost curve — the minimum. That is the point where the average prediction error is as low as possible. The model's training process searches for this point automatically."
+    }
+  ],
+  5: [
+    {
+      q: "What is optimisation in the context of training a linear regression model?",
+      opts:["Making the code run faster","Choosing which features to include","The process of finding the parameters that minimise the cost function","Removing outliers from the dataset"],
+      correct:2,
+      explanation:"Correct! Optimisation is the search for the parameter values (w and b) that produce the lowest possible cost. The model 'learns' by solving this optimisation problem — and in scikit-learn, model.fit() does this automatically."
+    },
+    {
+      q: "Gradient descent works by:",
+      opts:["Trying every possible value of w and picking the best","Following the slope of the cost curve downward in small steps until reaching the minimum","Randomly selecting a value of w","Asking a clinician to choose the best w"],
+      correct:1,
+      explanation:"Correct! Gradient descent starts at some value of w, checks which direction reduces the cost, takes a small step in that direction, and repeats. It gradually descends the cost curve like a ball rolling downhill, eventually reaching the minimum."
+    }
+  ],
+  6: [
+    {
+      q: "A model has R² = 0.72. What does this mean?",
+      opts:["72% of patients were predicted correctly","The average prediction error is 0.72 mmHg","The model explains 72% of the variation in blood pressure across patients","The model made errors on 28% of patients"],
+      correct:2,
+      explanation:"Correct! R² measures the proportion of outcome variation explained by the model. R² = 0.72 means the feature (age) explains 72% of why blood pressure varies between patients. The remaining 28% is unexplained."
+    },
+    {
+      q: "Which metric is expressed in the same units as the target variable (e.g. mmHg)?",
+      opts:["R² — it is a proportion between 0 and 1","Both MAE and RMSE — they are in the same units as the target","Only R²","Neither — all metrics are unitless"],
+      correct:1,
+      explanation:"Correct! Both MAE and RMSE are in the same units as the target. If you are predicting blood pressure in mmHg, MAE and RMSE will be in mmHg — which makes them easy to interpret clinically. R² is a unitless proportion between 0 and 1."
+    }
+  ]
+};
+
+// ── Render MCQs ──────────────────────────────────────────
+function renderMCQ(slideNum) {
+  const container = document.getElementById('mcq-'+slideNum);
+  if (!container || container.dataset.rendered) return;
+  container.dataset.rendered='1';
+  const qs = QUESTIONS[slideNum];
+  if (!qs) return;
+  container.innerHTML='';
+  const lbl = document.createElement('div');
+  lbl.className='mcq-label'; lbl.textContent='Check your understanding';
+  container.appendChild(lbl);
+  qs.forEach((q,qi) => {
+    const block = document.createElement('div');
+    block.className='mcq-block';
+    block.innerHTML=`<div class="mcq-qnum">Question ${qi+1}</div><div class="mcq-q">${q.q}</div>`;
+    const opts = document.createElement('div'); opts.className='mcq-opts';
+    const fb = document.createElement('div'); fb.className='mcq-fb';
+    const letters=['A','B','C','D'];
+    q.opts.forEach((txt,oi)=>{
+      const btn=document.createElement('button');
+      btn.className='mcq-opt';
+      btn.innerHTML=`<span class="opt-letter">${letters[oi]}</span>${txt}`;
+      btn.onclick=()=>{
+        opts.querySelectorAll('.mcq-opt').forEach(b=>b.disabled=true);
+        if (oi===q.correct) {
+          btn.classList.add('correct');
+          fb.className='mcq-fb correct-fb show';
+          fb.innerHTML=`<span class="fb-icon">✓ Correct!</span> ${q.explanation}`;
+        } else {
+          btn.classList.add('wrong');
+          opts.querySelectorAll('.mcq-opt')[q.correct].classList.add('reveal');
+          fb.className='mcq-fb wrong-fb show';
+          fb.innerHTML=`<span class="fb-icon">✗ Not quite.</span> The correct answer is <strong>${letters[q.correct]}</strong>. ${q.explanation}`;
+        }
+      };
+      opts.appendChild(btn);
+    });
+    block.appendChild(opts);
+    block.appendChild(fb);
+    container.appendChild(block);
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────
+renderMCQ(1);
+</script>
+</body>
+</html>
