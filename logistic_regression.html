@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistic Regression — Clinical Decision Making</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f2744;
+    --teal: #0e7a6e;
+    --teal-light: #13a898;
+    --mint: #d1f0eb;
+    --amber: #f59e0b;
+    --red: #dc2626;
+    --green: #16a34a;
+    --off-white: #f8fafc;
+    --slate: #64748b;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--off-white);
+    color: #1e293b;
+    line-height: 1.7;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, #1a3f6f 60%, #0e7a6e 100%);
+    color: white;
+    padding: 3.5rem 2rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 30%, rgba(19,168,152,.25) 0%, transparent 60%);
+  }
+  header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    padding: .3rem 1rem;
+    font-size: .8rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: .6rem;
+    position: relative;
+  }
+  header p {
+    font-size: 1.1rem;
+    opacity: .8;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── Nav ── */
+  nav {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 8px rgba(0,0,0,.06);
+  }
+  nav ul {
+    display: flex;
+    list-style: none;
+    gap: 0;
+    overflow-x: auto;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  nav ul li a {
+    display: block;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    color: var(--slate);
+    font-size: .88rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav ul li a:hover, nav ul li a.active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+  }
+
+  /* ── Main ── */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 4rem;
+  }
+  .section-label {
+    font-size: .75rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+  .section h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    color: var(--navy);
+    margin-bottom: 1rem;
+  }
+  .section > p {
+    color: #475569;
+    max-width: 720px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem 1.8rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+  .card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    color: var(--navy);
+    margin-bottom: .5rem;
+  }
+  .card p { color: #475569; font-size: .95rem; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+  .card-icon {
+    font-size: 1.8rem;
+    margin-bottom: .7rem;
+  }
+  .card.accent-teal { border-left: 4px solid var(--teal); }
+  .card.accent-amber { border-left: 4px solid var(--amber); }
+  .card.accent-red   { border-left: 4px solid var(--red); }
+  .card.accent-navy  { border-left: 4px solid var(--navy); }
+
+  /* ── Clinical Examples list ── */
+  .clinical-list {
+    list-style: none;
+    display: grid;
+    gap: .8rem;
+  }
+  .clinical-list li {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+  }
+  .clinical-list li .icon { font-size: 1.4rem; flex-shrink: 0; }
+  .clinical-list li strong { display: block; color: var(--navy); font-weight: 600; margin-bottom: .2rem; }
+  .clinical-list li span { color: #475569; font-size: .92rem; }
+
+  /* ── Formula box ── */
+  .formula-box {
+    background: var(--navy);
+    color: white;
+    border-radius: 12px;
+    padding: 1.6rem 2rem;
+    margin: 1.4rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+    text-align: center;
+    line-height: 2;
+  }
+  .formula-box .comment { color: #94a3b8; font-size: .85rem; font-family: 'DM Sans', sans-serif; display: block; margin-top: .4rem; }
+
+  /* ── Canvas/viz container ── */
+  .viz-box {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin: 1.4rem 0;
+  }
+  .viz-box h3 {
+    font-family: 'DM Serif Display', serif;
+    color: var(--navy);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+  canvas { display: block; width: 100%; }
+  .viz-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+  .viz-controls label { font-size: .9rem; color: var(--slate); }
+  .viz-controls input[type=range] {
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
+  .viz-controls span { font-weight: 600; color: var(--navy); min-width: 3ch; }
+  .viz-controls button {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: .4rem .9rem;
+    font-family: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .viz-controls button:hover { background: #0a6560; }
+
+  /* ── Prob output ── */
+  .prob-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .prob-bar-wrap {
+    flex: 1;
+    min-width: 200px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    height: 22px;
+    overflow: hidden;
+  }
+  .prob-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width .4s ease, background .4s;
+  }
+  .prob-label { font-weight: 600; font-size: 1.1rem; }
+
+  /* ── MCQ ── */
+  .mcq-block {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem 1.8rem;
+    margin-top: 1.4rem;
+  }
+  .mcq-block .q-label {
+    font-size: .75rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    font-weight: 700;
+    margin-bottom: .6rem;
+  }
+  .mcq-block .question {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--navy);
+    margin-bottom: 1rem;
+  }
+  .mcq-options { display: grid; gap: .55rem; }
+  .mcq-option {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all .18s;
+    font-size: .95rem;
+  }
+  .mcq-option:hover { border-color: var(--teal); background: #f0fdf8; }
+  .mcq-option.correct { border-color: var(--green); background: #f0fdf4; color: #15803d; font-weight: 600; }
+  .mcq-option.wrong   { border-color: var(--red);   background: #fef2f2; color: #b91c1c; }
+  .mcq-option .radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+    transition: all .18s;
+  }
+  .mcq-option.correct .radio { background: var(--green); border-color: var(--green); }
+  .mcq-option.wrong   .radio { background: var(--red);   border-color: var(--red); }
+  .mcq-feedback {
+    margin-top: .8rem;
+    padding: .75rem 1rem;
+    border-radius: 8px;
+    font-size: .92rem;
+    display: none;
+  }
+  .mcq-feedback.show { display: block; }
+  .mcq-feedback.correct { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .mcq-feedback.wrong   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+  /* ── Callout ── */
+  .callout {
+    display: flex;
+    gap: .9rem;
+    background: var(--mint);
+    border-left: 4px solid var(--teal);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    align-items: flex-start;
+  }
+  .callout .icon { font-size: 1.3rem; flex-shrink: 0; }
+  .callout p { font-size: .93rem; color: #0e4f49; }
+
+  /* ── Odds table ── */
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: .92rem; }
+  th { background: var(--navy); color: white; padding: .7rem 1rem; text-align: left; }
+  td { padding: .65rem 1rem; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:hover td { background: #f0fdf8; }
+
+  /* ── Progress ── */
+  .progress-bar-outer {
+    background: var(--border);
+    border-radius: 6px;
+    height: 8px;
+    margin-bottom: 2.5rem;
+  }
+  .progress-bar-inner {
+    height: 8px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light));
+    transition: width .5s ease;
+  }
+
+  /* ── Score panel ── */
+  #score-panel {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--navy);
+    color: white;
+    border-radius: 12px;
+    padding: .7rem 1.2rem;
+    font-size: .9rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    z-index: 200;
+  }
+  #score-panel span { font-weight: 700; color: var(--teal-light); }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    header { padding: 2.5rem 1rem 2rem; }
+    .card { padding: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Big Data Analytics & Decision Support · Lecture 8</div>
+  <h1>Logistic Regression</h1>
+  <p>A clinical guide to probabilistic classification — from risk scores to patient decisions.</p>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#why">Why Classification</a></li>
+    <li><a href="#decision">Decision Boundary</a></li>
+    <li><a href="#sigmoid">The Sigmoid</a></li>
+    <li><a href="#odds">Odds Ratio</a></li>
+    <li><a href="#learning">How It Learns</a></li>
+    <li><a href="#clinical">Clinical Strengths</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progress" style="width:0%"></div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SECTION 1: Why Classification
+  ═══════════════════════════════════ -->
+  <section class="section" id="why">
+    <div class="section-label">Section 1</div>
+    <h2>Binary Outcomes in Medicine</h2>
+    <p>
+      Most clinical decisions are binary: treat or don't treat, admit or discharge, malignant or benign.
+      <strong>Logistic Regression</strong> is the statistical workhorse behind these decisions because it
+      predicts the <em>probability</em> of a binary event.
+    </p>
+
+    <ul class="clinical-list">
+      <li>
+        <span class="icon">🦠</span>
+        <div>
+          <strong>Surgical Site Infection</strong>
+          <span>Did the patient develop an infection within 30 days of the operation? (Infected / Not Infected)</span>
+        </div>
+      </li>
+      <li>
+        <span class="icon">🏥</span>
+        <div>
+          <strong>Hospital Readmission</strong>
+          <span>Was the patient readmitted within 30 days of discharge? (Readmitted / Not Readmitted)</span>
+        </div>
+      </li>
+      <li>
+        <span class="icon">🔬</span>
+        <div>
+          <strong>Tumour Diagnosis</strong>
+          <span>Based on biopsy findings, is the tissue malignant or benign? (Malignant / Benign)</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="callout">
+      <span class="icon">💡</span>
+      <p><strong>Why not Linear Regression?</strong> Linear regression can predict values outside [0, 1], producing impossible probabilities like −0.2 or 1.4. Logistic Regression guarantees outputs between 0% and 100%.</p>
+    </div>
+
+    <!-- MCQ 1 -->
+    <div class="mcq-block" data-correct="b">
+      <div class="q-label">❓ MCQ 1.1</div>
+      <div class="question">A researcher wants to predict whether a patient will be readmitted to the hospital within 30 days. Which type of outcome variable does this represent?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> A continuous outcome (any value on a scale)</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> A binary outcome (two mutually exclusive categories)</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> An ordinal outcome (ranked categories)</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> A nominal outcome with more than two categories</div>
+      </div>
+      <div class="mcq-feedback correct" id="fb-1-correct">✅ Correct! Readmission (yes/no) is a classic binary outcome with exactly two mutually exclusive values — perfect for logistic regression.</div>
+      <div class="mcq-feedback wrong" id="fb-1-wrong">❌ Not quite. Readmission is a yes/no event — it has exactly two outcomes, making it <em>binary</em>. Logistic regression is designed for exactly this type of problem.</div>
+    </div>
+
+    <!-- MCQ 2 -->
+    <div class="mcq-block" data-correct="c">
+      <div class="q-label">❓ MCQ 1.2</div>
+      <div class="question">Why is ordinary linear regression unsuitable for predicting the probability of malignancy from a biopsy?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> It can only handle one predictor variable at a time</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> It requires too many patients to train</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> Its predictions can fall outside the 0–1 probability range</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> It cannot handle categorical predictor variables</div>
+      </div>
+      <div class="mcq-feedback correct" id="fb-2-correct">✅ Exactly! Linear regression can produce values like −0.3 or 1.5 — meaningless as probabilities. Logistic regression solves this by mapping any real number to the (0, 1) interval via the sigmoid function.</div>
+      <div class="mcq-feedback wrong" id="fb-2-wrong">❌ The key issue is that linear regression produces values outside [0, 1], giving impossible probabilities. That's why we need the sigmoid transformation of logistic regression.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 2: Decision Boundary
+  ═══════════════════════════════════ -->
+  <section class="section" id="decision">
+    <div class="section-label">Section 2</div>
+    <h2>The Decision Boundary</h2>
+    <p>
+      Before we can classify patients, we need a <strong>dividing line</strong> — a boundary that separates
+      those who are High Risk from those who are Low Risk.
+    </p>
+
+    <div class="card-grid">
+      <div class="card accent-teal">
+        <div class="card-icon">📊</div>
+        <h3>From "What" to "So What"</h3>
+        <p>Features like Age or Blood Pressure tell us <em>what</em> is happening. The decision line tells us <em>what to do</em> — it bridges observation and intervention.</p>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-icon">🌫️</div>
+        <h3>The Problem of Overlap</h3>
+        <p>Healthy and sick patients often have similar vitals. Without a decision line, we are stuck in a gray zone where a clear treatment decision is impossible.</p>
+      </div>
+      <div class="card accent-navy">
+        <div class="card-icon">🎚️</div>
+        <h3>Simplifying Complexity</h3>
+        <p>A patient may have five different risk factors. The decision boundary collapses all those signals into a single "Yes/No" answer.</p>
+      </div>
+    </div>
+
+    <div class="viz-box">
+      <h3>🔍 Interactive: Risk Score Zone</h3>
+      <p style="color:var(--slate);font-size:.9rem;margin-bottom:1rem">
+        The model computes a risk score <strong>z</strong> for every patient using a linear formula: z = β₀ + β₁·Age + β₂·BP.<br>
+        Move the sliders to see how age and blood pressure shift a patient's risk score.
+      </p>
+      <canvas id="decisionCanvas" height="200"></canvas>
+      <div class="viz-controls">
+        <label>Age: <input type="range" id="sliderAge" min="20" max="85" value="50"> <span id="valAge">50</span></label>
+        <label>Sys. BP: <input type="range" id="sliderBP" min="90" max="200" value="130"> <span id="valBP">130</span></label>
+        <div id="scoreDisplay" style="font-weight:600;color:var(--navy);min-width:160px"></div>
+      </div>
+    </div>
+
+    <!-- MCQ 3 -->
+    <div class="mcq-block" data-correct="b">
+      <div class="q-label">❓ MCQ 2.1</div>
+      <div class="question">In logistic regression, what does a risk score of <em>z = 0</em> indicate about a patient's position relative to the decision boundary?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> The patient is definitely in the high-risk category</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> The patient is exactly on the boundary (50/50 probability)</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> The patient has no measurable risk factors</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> The model failed to converge for that patient</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! When z = 0, the sigmoid function returns exactly 0.5 (50%). The patient is sitting precisely on the decision boundary — neither clearly in the low-risk nor high-risk zone.</div>
+      <div class="mcq-feedback wrong">❌ When z = 0, sigmoid(0) = 0.5 — a 50/50 probability. The patient is exactly on the decision boundary, in a neutral position.</div>
+    </div>
+
+    <!-- MCQ 4 -->
+    <div class="mcq-block" data-correct="a">
+      <div class="q-label">❓ MCQ 2.2</div>
+      <div class="question">A patient's risk score increases from z = 1 to z = 3. What is the most accurate interpretation of this change?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> The patient has moved further into the high-risk zone, with a higher predicted probability of the adverse outcome</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> The patient's probability of the adverse outcome tripled</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> The patient crossed the decision boundary from low-risk to high-risk</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> The change in z represents the exact change in probability</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! Both z = 1 and z = 3 are already in the high-risk zone (z > 0), but z = 3 implies a higher probability via the sigmoid function. The relationship is non-linear — z scores don't map directly to probability differences.</div>
+      <div class="mcq-feedback wrong">❌ The patient was already in the high-risk zone at z = 1. Moving to z = 3 increases probability further, but not proportionally — the sigmoid function creates a non-linear mapping between z and probability.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 3: The Sigmoid Function
+  ═══════════════════════════════════ -->
+  <section class="section" id="sigmoid">
+    <div class="section-label">Section 3</div>
+    <h2>The Sigmoid Transformation</h2>
+    <p>
+      Clinicians think in probabilities, not raw scores. The sigmoid function <em>squashes</em>
+      any real-valued score (z) into a meaningful probability between 0 and 1.
+    </p>
+
+    <div class="formula-box">
+      p(X) = 1 / (1 + e<sup>−z</sup>)
+      <span class="comment">Where z = β₀ + β₁X₁ + β₂X₂ + … is the linear risk score</span>
+    </div>
+
+    <div class="viz-box">
+      <h3>📈 Interactive Sigmoid Curve</h3>
+      <p style="color:var(--slate);font-size:.9rem;margin-bottom:1rem">
+        Drag the slider to position a patient on the risk score axis. Watch how the score transforms into a probability.
+      </p>
+      <canvas id="sigmoidCanvas" height="240"></canvas>
+      <div class="viz-controls">
+        <label>Risk score (z): <input type="range" id="sliderZ" min="-6" max="6" step="0.1" value="0"> <span id="valZ">0.0</span></label>
+      </div>
+      <div class="prob-display">
+        <div>Predicted probability:</div>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar" id="probBar" style="width:50%;background:var(--amber)"></div>
+        </div>
+        <div class="prob-label" id="probLabel">50%</div>
+      </div>
+      <div id="clinicalInterpret" style="margin-top:.8rem;font-size:.9rem;color:var(--slate);font-style:italic"></div>
+    </div>
+
+    <div class="callout">
+      <span class="icon">🏥</span>
+      <p>Instead of telling a surgeon <em>"this patient has a score of 4.8"</em>, we can say <em>"this patient has a <strong>99% probability of post-operative complication</strong>"</em>. This makes the model directly actionable in a clinical setting.</p>
+    </div>
+
+    <!-- MCQ 5 -->
+    <div class="mcq-block" data-correct="d">
+      <div class="q-label">❓ MCQ 3.1</div>
+      <div class="question">A logistic regression model produces a raw score of z = −2.5 for a patient. What does the sigmoid function output?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> A probability of exactly 2.5%</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> A probability greater than 50%</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> A negative probability, indicating "definite absence"</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> A probability less than 50%, since z is negative</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! Sigmoid(−2.5) ≈ 0.076, i.e. about 7.6%. Any negative z value maps to a probability below 50%, indicating lower risk. The sigmoid always outputs between 0 and 1.</div>
+      <div class="mcq-feedback wrong">❌ When z is negative, sigmoid(z) &lt; 0.5. Sigmoid(−2.5) ≈ 7.6% — a low-probability, low-risk classification. Probabilities are always between 0 and 1.</div>
+    </div>
+
+    <!-- MCQ 6 -->
+    <div class="mcq-block" data-correct="b">
+      <div class="q-label">❓ MCQ 3.2</div>
+      <div class="question">Why does logistic regression use the sigmoid function rather than directly outputting the linear score z?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> To speed up computation during model training</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> To constrain outputs to [0, 1] so they can be interpreted as probabilities</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> To ensure the model can handle more than two classes</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> Because z values are always too small to be clinically useful</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Right! The sigmoid "squashes" unbounded z values (−∞ to +∞) into the (0, 1) range. This transforms meaningless scores into interpretable probabilities that clinicians can act on.</div>
+      <div class="mcq-feedback wrong">❌ The purpose of the sigmoid is to map any real-valued score into the [0, 1] range, producing interpretable probabilities rather than unbounded numbers.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 4: Odds Ratio
+  ═══════════════════════════════════ -->
+  <section class="section" id="odds">
+    <div class="section-label">Section 4</div>
+    <h2>Interpreting Coefficients — The Odds Ratio</h2>
+    <p>
+      The raw β coefficients are hard to interpret. By exponentiating them (e<sup>β</sup>), we obtain
+      <strong>Odds Ratios</strong> — a concept deeply familiar to clinical researchers.
+    </p>
+
+    <div class="formula-box">
+      Odds Ratio = e<sup>β</sup>
+      <span class="comment">An OR > 1 means the predictor increases risk · OR &lt; 1 means it decreases risk</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Predictor</th>
+          <th>Coefficient (β)</th>
+          <th>Odds Ratio (eᵝ)</th>
+          <th>Clinical Interpretation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Age (per year)</td>
+          <td>0.04</td>
+          <td>1.04</td>
+          <td>Each additional year of age increases the odds by ~4%</td>
+        </tr>
+        <tr>
+          <td>Smoking (yes vs no)</td>
+          <td>0.69</td>
+          <td>2.00</td>
+          <td>Smokers have twice the odds of the adverse outcome</td>
+        </tr>
+        <tr>
+          <td>BMI (per unit)</td>
+          <td>0.05</td>
+          <td>1.05</td>
+          <td>Each BMI unit adds ~5% to the odds</td>
+        </tr>
+        <tr>
+          <td>Treatment A (yes vs no)</td>
+          <td>−0.51</td>
+          <td>0.60</td>
+          <td>Treatment reduces the odds by ~40%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="viz-box" style="margin-top:1.4rem">
+      <h3>🧮 Odds Ratio Explorer</h3>
+      <p style="color:var(--slate);font-size:.9rem;margin-bottom:1rem">Adjust the coefficient β to see the corresponding Odds Ratio and its clinical meaning.</p>
+      <canvas id="orCanvas" height="180"></canvas>
+      <div class="viz-controls">
+        <label>β coefficient: <input type="range" id="sliderBeta" min="-2" max="2" step="0.05" value="0.7"> <span id="valBeta">0.70</span></label>
+      </div>
+      <div id="orResult" style="margin-top:.8rem;font-weight:600;font-size:1rem;color:var(--navy)"></div>
+    </div>
+
+    <!-- MCQ 7 -->
+    <div class="mcq-block" data-correct="c">
+      <div class="q-label">❓ MCQ 4.1</div>
+      <div class="question">A logistic regression model predicts 30-day mortality. The coefficient for "Diabetes" is β = 0.916. What is the Odds Ratio and its interpretation?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> OR = 0.916; diabetic patients have a 9% lower risk of mortality</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> OR = 0.4; diabetes is associated with a protective effect</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> OR ≈ 2.5; diabetic patients have about 2.5× the odds of mortality</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> OR ≈ 0.916; the risk is 91.6% for diabetic patients</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! e^0.916 ≈ 2.5. Diabetic patients have approximately 2.5 times the odds of 30-day mortality compared to non-diabetic patients, holding other factors constant.</div>
+      <div class="mcq-feedback wrong">❌ The Odds Ratio = e^β = e^0.916 ≈ 2.5. A positive β means increased risk. Diabetic patients have about 2.5 times the odds of the outcome.</div>
+    </div>
+
+    <!-- MCQ 8 -->
+    <div class="mcq-block" data-correct="b">
+      <div class="q-label">❓ MCQ 4.2</div>
+      <div class="question">In a model predicting ICU admission, the coefficient for "Statin use" is β = −0.693. What is the Odds Ratio and what does it suggest?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> OR ≈ 2.0; statins double the risk of ICU admission</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> OR ≈ 0.5; statin users have half the odds of ICU admission</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> OR = −0.693; statins reduce risk by 69.3%</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> OR = 1.0; statins have no effect on ICU admission</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! e^(−0.693) ≈ 0.5. A negative coefficient means a protective effect. Statin users have approximately half the odds of ICU admission compared to non-users.</div>
+      <div class="mcq-feedback wrong">❌ e^(−0.693) ≈ 0.5. A negative β produces an OR &lt; 1, indicating a protective association. Statin users have approximately 50% lower odds of ICU admission.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 5: How It Learns
+  ═══════════════════════════════════ -->
+  <section class="section" id="learning">
+    <div class="section-label">Section 5</div>
+    <h2>How the Model Learns — MLE & Log Loss</h2>
+    <p>
+      Logistic regression doesn't use Ordinary Least Squares. Instead, it finds weights that
+      <strong>maximize the likelihood</strong> of observing the actual patient outcomes — a process
+      called Maximum Likelihood Estimation (MLE).
+    </p>
+
+    <div class="card-grid">
+      <div class="card accent-teal">
+        <div class="card-icon">🎯</div>
+        <h3>Maximum Likelihood Estimation</h3>
+        <p>Find the β weights that make the observed clinical data <em>most probable</em>. If a patient had a complication and the model predicted 95% — great. If it predicted 5% — penalise heavily.</p>
+      </div>
+      <div class="card accent-red">
+        <div class="card-icon">⚡</div>
+        <h3>Log Loss (Cross-Entropy)</h3>
+        <p>The "punishment" system. Predicting 0.05 for a patient who actually had the event receives a <em>near-infinite</em> penalty. Predicting 0.95 for the same patient yields a near-zero penalty.</p>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-icon">⛰️</div>
+        <h3>Gradient Descent</h3>
+        <p>The algorithm iteratively adjusts weights in the direction that reduces the Log Loss — like rolling a ball down a hill until it reaches the lowest point.</p>
+      </div>
+    </div>
+
+    <div class="viz-box">
+      <h3>📉 Log Loss Visualizer</h3>
+      <p style="color:var(--slate);font-size:.9rem;margin-bottom:1rem">
+        For a patient who <em>actually had</em> the event (y = 1), move the slider to see how the penalty changes as the model's predicted probability changes.
+      </p>
+      <canvas id="lossCanvas" height="220"></canvas>
+      <div class="viz-controls">
+        <label>Predicted probability: <input type="range" id="sliderProb" min="0.01" max="0.99" step="0.01" value="0.5"> <span id="valProb">0.50</span></label>
+      </div>
+      <div id="lossResult" style="margin-top:.8rem;font-weight:600;font-size:1rem"></div>
+    </div>
+
+    <!-- MCQ 9 -->
+    <div class="mcq-block" data-correct="c">
+      <div class="q-label">❓ MCQ 5.1</div>
+      <div class="question">A logistic regression model predicts a 0.02 probability of mortality for a patient who actually died. Which statement about the log loss penalty is correct?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> The penalty is very small because the probability is close to zero</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> The penalty is exactly 0.02 units</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> The penalty is very large — log(0.02) creates a severe punishment</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> No penalty is applied because the model tried its best</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Exactly! Log loss for y=1 is −log(predicted probability). −log(0.02) ≈ 3.91, a very large penalty. When the model is confident in the wrong direction, the loss grows dramatically.</div>
+      <div class="mcq-feedback wrong">❌ Log loss = −log(p) for a positive case. −log(0.02) ≈ 3.91 — an enormous penalty. This is by design: confidently wrong predictions are punished severely to push the model toward better calibration.</div>
+    </div>
+
+    <!-- MCQ 10 -->
+    <div class="mcq-block" data-correct="a">
+      <div class="q-label">❓ MCQ 5.2</div>
+      <div class="question">What is the goal of Gradient Descent in logistic regression training?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> Iteratively adjust the model weights to minimise the total log loss across all training patients</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> Find the decision boundary by sorting patients by risk score</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> Maximise the number of correct predictions regardless of confidence</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> Randomly sample subsets of patients to improve generalisation</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! Gradient descent iteratively nudges the β weights in the direction that reduces log loss — like walking downhill on the loss surface until convergence at the optimal weights.</div>
+      <div class="mcq-feedback wrong">❌ Gradient descent is an optimisation algorithm that iteratively adjusts β weights to reduce the total log loss. It follows the gradient (slope) of the loss surface downward until reaching a minimum.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 6: Clinical Strengths
+  ═══════════════════════════════════ -->
+  <section class="section" id="clinical">
+    <div class="section-label">Section 6</div>
+    <h2>Why Logistic Regression Thrives in Clinical Settings</h2>
+    <p>
+      Despite being decades old, logistic regression remains the gold standard for clinical prediction models — including APACHE, SOFA, and FIB-4.
+    </p>
+
+    <div class="card-grid">
+      <div class="card accent-teal">
+        <div class="card-icon">🗣️</div>
+        <h3>It Speaks "Risk"</h3>
+        <p>Odds Ratios align with how clinicians already think. "Smoking doubles your risk" is far more actionable than "the neural network increased the activation by 0.3".</p>
+      </div>
+      <div class="card accent-navy">
+        <div class="card-icon">📦</div>
+        <h3>Bounded Outputs</h3>
+        <p>Probabilities always land between 0% and 100%. The model will never say "120% chance of survival" — a guarantee linear regression cannot make.</p>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-icon">🔍</div>
+        <h3>The Glass Box</h3>
+        <p>Unlike deep learning, every coefficient is inspectable. A physician can trace exactly which factors drove the risk estimate and justify it to patients or ethics committees.</p>
+      </div>
+      <div class="card accent-teal">
+        <div class="card-icon">🧑‍🔬</div>
+        <h3>Small Sample Friendly</h3>
+        <p>Works well with dozens of patients. Deep learning usually needs thousands of training examples to perform well.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.2rem;border-top:4px solid var(--navy);background:#f8fafc">
+      <h3>⚠️ Model Limitations</h3>
+      <p style="margin-bottom:.5rem"><strong>Linear Decision Boundary:</strong> Logistic regression draws a straight line. If the true boundary between classes is curved, the model will underperform — consider tree-based methods for non-linear relationships.</p>
+      <p><strong>Multicollinearity:</strong> When two predictors are highly correlated (e.g., BMI and Weight), the model struggles to assign reliable coefficients to each. Always check your VIF before reporting results.</p>
+    </div>
+
+    <!-- MCQ 11 -->
+    <div class="mcq-block" data-correct="d">
+      <div class="q-label">❓ MCQ 6.1</div>
+      <div class="question">A hospital committee asks why the AI model flagged a patient as "High Risk for sepsis". Which property of logistic regression makes this easiest to answer?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> Logistic regression is faster to run than deep learning</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> It requires fewer training patients than other models</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> It produces perfectly accurate predictions</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> Its coefficients (odds ratios) reveal exactly which factors drove the classification</div>
+      </div>
+      <div class="mcq-feedback correct">✅ This is the "Glass Box" advantage. The clinician can present each predictor's odds ratio to explain the decision: "The patient's age (OR 1.6) and elevated CRP (OR 2.3) were the primary drivers of the high-risk flag."</div>
+      <div class="mcq-feedback wrong">❌ The "Glass Box" property is key here. Each coefficient has an interpretable Odds Ratio, so clinicians can explain exactly which risk factors drove the model's decision — unlike a deep learning "Black Box".</div>
+    </div>
+
+    <!-- MCQ 12 -->
+    <div class="mcq-block" data-correct="b">
+      <div class="q-label">❓ MCQ 6.2</div>
+      <div class="question">A researcher finds that two predictors — "Total Cholesterol" and "LDL Cholesterol" — have a correlation of r = 0.95 in their dataset. Which logistic regression limitation does this trigger?</div>
+      <div class="mcq-options">
+        <div class="mcq-option" data-val="a" onclick="answerMCQ(this)"><div class="radio"></div> Linear assumption violation — the data is not linearly separable</div>
+        <div class="mcq-option" data-val="b" onclick="answerMCQ(this)"><div class="radio"></div> Multicollinearity — highly correlated predictors make coefficients unstable and unreliable</div>
+        <div class="mcq-option" data-val="c" onclick="answerMCQ(this)"><div class="radio"></div> Overfitting — too many predictors for the sample size</div>
+        <div class="mcq-option" data-val="d" onclick="answerMCQ(this)"><div class="radio"></div> Class imbalance — the outcome events are too rare</div>
+      </div>
+      <div class="mcq-feedback correct">✅ Correct! Multicollinearity occurs when predictors are highly correlated. The model cannot reliably separate their individual contributions, leading to inflated standard errors and unstable Odds Ratios. Removing or combining correlated predictors is the standard remedy.</div>
+      <div class="mcq-feedback wrong">❌ r = 0.95 is severe multicollinearity. When predictors overlap almost completely, the model can't isolate their individual effects — coefficients become unstable and standard errors balloon. One of the predictors should typically be removed.</div>
+    </div>
+  </section>
+
+</main>
+
+<div id="score-panel">Quiz Score: <span id="scoreText">0 / 0</span></div>
+
+<script>
+// ═══════════════════════════════
+// MCQ Engine
+// ═══════════════════════════════
+let scoreCorrect = 0, scoreTotal = 0;
+
+function answerMCQ(el) {
+  const block = el.closest('.mcq-block');
+  if (block.dataset.answered) return;
+  block.dataset.answered = 'true';
+
+  const correct = block.dataset.correct;
+  const chosen = el.dataset.val;
+  const isRight = chosen === correct;
+
+  block.querySelectorAll('.mcq-option').forEach(opt => {
+    opt.style.pointerEvents = 'none';
+    if (opt.dataset.val === correct) opt.classList.add('correct');
+    else if (opt.dataset.val === chosen && !isRight) opt.classList.add('wrong');
+  });
+
+  const fbs = block.querySelectorAll('.mcq-feedback');
+  fbs.forEach(fb => {
+    fb.classList.add('show');
+    if (!isRight && fb.classList.contains('correct')) fb.classList.remove('show');
+    if (isRight && fb.classList.contains('wrong')) fb.classList.remove('show');
+  });
+
+  scoreTotal++;
+  if (isRight) scoreCorrect++;
+  document.getElementById('scoreText').textContent = `${scoreCorrect} / ${scoreTotal}`;
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.mcq-block').length;
+  const done = document.querySelectorAll('.mcq-block[data-answered]').length;
+  document.getElementById('progress').style.width = (done / total * 100) + '%';
+}
+
+// ═══════════════════════════════
+// Viz 1: Decision Canvas
+// ═══════════════════════════════
+(function() {
+  const canvas = document.getElementById('decisionCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    draw();
+  }
+
+  function getZ(age, bp) {
+    return -6 + age * 0.06 + bp * 0.02;
+  }
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    // axis line
+    const mx = 40, rx = W - 20;
+    const cy = H / 2;
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mx, cy); ctx.lineTo(rx, cy); ctx.stroke();
+
+    // zones
+    const zeroX = (mx + rx) / 2;
+    // green zone
+    const grad1 = ctx.createLinearGradient(mx, 0, zeroX, 0);
+    grad1.addColorStop(0, 'rgba(22,163,74,.08)');
+    grad1.addColorStop(1, 'rgba(22,163,74,.18)');
+    ctx.fillStyle = grad1;
+    ctx.fillRect(mx, cy - 30, zeroX - mx, 60);
+    // red zone
+    const grad2 = ctx.createLinearGradient(zeroX, 0, rx, 0);
+    grad2.addColorStop(0, 'rgba(220,38,38,.12)');
+    grad2.addColorStop(1, 'rgba(220,38,38,.22)');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(zeroX, cy - 30, rx - zeroX, 60);
+
+    // labels
+    ctx.font = '600 12px DM Sans, sans-serif';
+    ctx.fillStyle = '#16a34a';
+    ctx.textAlign = 'left';
+    ctx.fillText('✓ Low Risk (z < 0)', mx + 8, cy - 12);
+    ctx.fillStyle = '#dc2626';
+    ctx.textAlign = 'right';
+    ctx.fillText('⚠ High Risk (z > 0)', rx - 8, cy - 12);
+
+    // z axis ticks
+    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'; ctx.font = '11px DM Sans, sans-serif';
+    [-4, -2, 0, 2, 4].forEach(v => {
+      const x = zeroX + v * ((rx - mx) / 12);
+      ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x - 0.5, cy - 4, 1, 8);
+      ctx.fillStyle = '#64748b'; ctx.fillText(v, x, cy + 20);
+    });
+
+    // patient dot
+    const age = parseInt(document.getElementById('sliderAge').value);
+    const bp  = parseInt(document.getElementById('sliderBP').value);
+    const z = Math.max(-6, Math.min(6, getZ(age, bp)));
+    const px = zeroX + z * ((rx - mx) / 12);
+
+    ctx.beginPath();
+    ctx.arc(px, cy, 11, 0, Math.PI * 2);
+    ctx.fillStyle = z > 0 ? '#dc2626' : '#16a34a';
+    ctx.fill();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 10px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('P', px, cy + 4);
+
+    ctx.fillStyle = z > 0 ? '#dc2626' : '#16a34a';
+    ctx.font = '600 12px DM Sans,sans-serif';
+    ctx.fillText(`z = ${z.toFixed(2)}`, px, cy - 20);
+
+    const scoreEl = document.getElementById('scoreDisplay');
+    const p = 1 / (1 + Math.exp(-z));
+    scoreEl.textContent = `Risk Score z = ${z.toFixed(2)} → Probability: ${(p * 100).toFixed(1)}%`;
+    scoreEl.style.color = z > 0 ? '#dc2626' : '#16a34a';
+  }
+
+  document.getElementById('sliderAge').addEventListener('input', function() {
+    document.getElementById('valAge').textContent = this.value; draw();
+  });
+  document.getElementById('sliderBP').addEventListener('input', function() {
+    document.getElementById('valBP').textContent = this.value; draw();
+  });
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 50);
+})();
+
+// ═══════════════════════════════
+// Viz 2: Sigmoid Canvas
+// ═══════════════════════════════
+(function() {
+  const canvas = document.getElementById('sigmoidCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    draw();
+  }
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    const ml = 50, mr = 20, mt = 20, mb = 30;
+    const iW = W - ml - mr, iH = H - mt - mb;
+
+    // axes
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    // grid lines
+    [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+      const y = mt + iH * (1 - v);
+      ctx.beginPath(); ctx.moveTo(ml, y); ctx.lineTo(ml + iW, y);
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '10px DM Sans,sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText((v * 100).toFixed(0) + '%', ml - 6, y + 4);
+    });
+
+    // Sigmoid curve
+    ctx.beginPath(); ctx.lineWidth = 2.5;
+    const grad = ctx.createLinearGradient(ml, 0, ml + iW, 0);
+    grad.addColorStop(0, '#16a34a'); grad.addColorStop(0.5, '#f59e0b'); grad.addColorStop(1, '#dc2626');
+    ctx.strokeStyle = grad;
+    for (let px = 0; px <= iW; px++) {
+      const z = (px / iW) * 12 - 6;
+      const p = sigmoid(z);
+      const cy2 = mt + iH * (1 - p);
+      px === 0 ? ctx.moveTo(ml + px, cy2) : ctx.lineTo(ml + px, cy2);
+    }
+    ctx.stroke();
+
+    // current z
+    const z = parseFloat(document.getElementById('sliderZ').value);
+    const p = sigmoid(z);
+    const dotX = ml + ((z + 6) / 12) * iW;
+    const dotY = mt + iH * (1 - p);
+
+    // vertical/horizontal guides
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dotX, dotY); ctx.lineTo(dotX, mt + iH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dotX, dotY); ctx.lineTo(ml, dotY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // dot
+    ctx.beginPath(); ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = p > 0.5 ? '#dc2626' : '#16a34a'; ctx.fill();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 9px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('P', dotX, dotY + 3);
+
+    // z labels on x axis
+    ctx.fillStyle = '#94a3b8'; ctx.font = '10px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    [-6,-4,-2,0,2,4,6].forEach(v => {
+      const x = ml + ((v + 6) / 12) * iW;
+      ctx.fillText(v, x, mt + iH + 16);
+    });
+    ctx.fillStyle = '#475569'; ctx.font = '11px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Risk Score z', ml + iW / 2, mt + iH + 28);
+
+    // update ui
+    document.getElementById('valZ').textContent = z.toFixed(1);
+    const pct = (p * 100).toFixed(1);
+    document.getElementById('probBar').style.width = pct + '%';
+    const bar = document.getElementById('probBar');
+    bar.style.background = p > 0.7 ? '#dc2626' : p > 0.4 ? '#f59e0b' : '#16a34a';
+    document.getElementById('probLabel').textContent = pct + '%';
+    document.getElementById('clinicalInterpret').textContent =
+      p >= 0.7 ? `⚠️ High Risk — This patient has a ${pct}% predicted probability of the adverse outcome.` :
+      p >= 0.4 ? `🟡 Borderline — A ${pct}% probability. Clinical judgement is critical here.` :
+      `✅ Low Risk — Only a ${pct}% predicted probability. Routine monitoring may suffice.`;
+  }
+
+  document.getElementById('sliderZ').addEventListener('input', draw);
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 50);
+})();
+
+// ═══════════════════════════════
+// Viz 3: Odds Ratio Canvas
+// ═══════════════════════════════
+(function() {
+  const canvas = document.getElementById('orCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    draw();
+  }
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    const beta = parseFloat(document.getElementById('sliderBeta').value);
+    const OR = Math.exp(beta);
+
+    // draw a horizontal bar chart style
+    const cx = W / 2, cy = H / 2;
+    const maxBar = (W / 2) - 60;
+    const barH = 36;
+
+    // reference line (OR=1)
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, H - 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('OR = 1 (No effect)', cx, 16);
+
+    // bar
+    const barW = Math.min(maxBar, Math.abs(Math.log(OR)) / Math.log(8) * maxBar);
+    const isPos = OR >= 1;
+    const barColor = isPos ? '#dc2626' : '#16a34a';
+
+    ctx.fillStyle = barColor + '22';
+    ctx.fillRect(isPos ? cx : cx - barW, cy - barH / 2, barW, barH);
+    ctx.fillStyle = barColor;
+    ctx.fillRect(isPos ? cx : cx - barW, cy - barH / 2, barW, barH);
+
+    // OR label
+    ctx.fillStyle = 'white'; ctx.font = 'bold 15px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    const labelX = isPos ? cx + barW / 2 : cx - barW / 2;
+    ctx.fillText(`OR = ${OR.toFixed(2)}`, labelX, cy + 6);
+
+    // axis labels
+    ctx.fillStyle = '#475569'; ctx.font = '11px DM Sans,sans-serif';
+    ctx.textAlign = 'left'; ctx.fillText('Protective ←', 20, cy + barH / 2 + 18);
+    ctx.textAlign = 'right'; ctx.fillText('→ Risk increasing', W - 20, cy + barH / 2 + 18);
+
+    // Result
+    document.getElementById('valBeta').textContent = beta.toFixed(2);
+    const interp = OR > 1
+      ? `OR = ${OR.toFixed(2)} — Each unit increase in this predictor multiplies the odds by ${OR.toFixed(2)} (risk-increasing factor)`
+      : OR < 1
+      ? `OR = ${OR.toFixed(2)} — This predictor reduces the odds by ${((1 - OR) * 100).toFixed(0)}% (protective factor)`
+      : `OR = 1.00 — This predictor has no effect on the odds`;
+    document.getElementById('orResult').textContent = interp;
+    document.getElementById('orResult').style.color = OR > 1 ? '#dc2626' : OR < 1 ? '#16a34a' : '#64748b';
+  }
+
+  document.getElementById('sliderBeta').addEventListener('input', draw);
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 50);
+})();
+
+// ═══════════════════════════════
+// Viz 4: Log Loss Canvas
+// ═══════════════════════════════
+(function() {
+  const canvas = document.getElementById('lossCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    draw();
+  }
+
+  function draw() {
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    const ml = 55, mr = 20, mt = 20, mb = 35;
+    const iW = W - ml - mr, iH = H - mt - mb;
+    const maxLoss = 5;
+
+    // grid
+    ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
+    [0, 1, 2, 3, 4, 5].forEach(v => {
+      const y = mt + iH * (v / maxLoss);
+      ctx.beginPath(); ctx.moveTo(ml, y); ctx.lineTo(ml + iW, y); ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '10px DM Sans,sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(v.toFixed(0), ml - 6, y + 4);
+    });
+
+    // Log loss curve for y=1: -log(p)
+    ctx.beginPath(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#0e7a6e';
+    for (let px = 0; px <= iW; px++) {
+      const p = 0.01 + (px / iW) * 0.98;
+      const loss = Math.min(maxLoss, -Math.log(p));
+      const cy2 = mt + iH * (loss / maxLoss);
+      px === 0 ? ctx.moveTo(ml + px, cy2) : ctx.lineTo(ml + px, cy2);
+    }
+    ctx.stroke();
+
+    // current probe
+    const p = parseFloat(document.getElementById('sliderProb').value);
+    const loss = Math.min(maxLoss, -Math.log(p));
+    const dotX = ml + ((p - 0.01) / 0.98) * iW;
+    const dotY = mt + iH * (loss / maxLoss);
+
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dotX, dotY); ctx.lineTo(dotX, mt + iH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dotX, dotY); ctx.lineTo(ml, dotY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath(); ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = p > 0.5 ? '#16a34a' : '#dc2626'; ctx.fill();
+
+    // x axis labels
+    ctx.fillStyle = '#94a3b8'; ctx.font = '10px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+      const x = ml + ((v - 0.01) / 0.98) * iW;
+      ctx.fillText((v * 100).toFixed(0) + '%', x, mt + iH + 16);
+    });
+    ctx.fillText('Predicted probability (for a patient who actually had the event)', ml + iW / 2, mt + iH + 28);
+    ctx.save(); ctx.translate(14, mt + iH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Log Loss', 0, 0); ctx.restore();
+
+    // update
+    document.getElementById('valProb').textContent = p.toFixed(2);
+    const lossEl = document.getElementById('lossResult');
+    lossEl.textContent = `Predicted: ${(p * 100).toFixed(0)}% → Log Loss = ${loss.toFixed(3)}`;
+    lossEl.style.color = p < 0.3 ? '#dc2626' : p > 0.7 ? '#16a34a' : '#f59e0b';
+  }
+
+  document.getElementById('sliderProb').addEventListener('input', draw);
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 50);
+})();
+
+// ═══════════════════════════════
+// Nav active state on scroll
+// ═══════════════════════════════
+window.addEventListener('scroll', () => {
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('nav a');
+  let found = '';
+  sections.forEach(s => {
+    if (s.getBoundingClientRect().top < 120) found = s.id;
+  });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + found);
+  });
+});
+</script>
+</body>
+</html>

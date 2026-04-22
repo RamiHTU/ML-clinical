@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classification in ML — Review & Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-light: #ccfbf1;
+    --teal-mid: #14b8a6;
+    --dark: #1e293b;
+    --slate: #475569;
+    --light: #f8fafc;
+    --border: #e2e8f0;
+    --white: #ffffff;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.6;
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--dark);
+    color: var(--white);
+    padding: 64px 40px 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(20,184,166,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(13,148,136,0.3);
+    border: 1px solid rgba(13,148,136,0.5);
+    color: var(--teal-mid);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .hero h1 em {
+    color: var(--teal-mid);
+    font-style: italic;
+  }
+  .hero p {
+    font-size: 1rem;
+    color: #94a3b8;
+    max-width: 560px;
+    font-weight: 300;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .hero-meta span {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-meta .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap {
+    background: var(--dark);
+    padding: 0 40px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .progress-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--teal-mid));
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 64px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--teal);
+    background: var(--teal-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.55rem;
+    font-weight: 400;
+    color: var(--dark);
+    line-height: 1.2;
+  }
+
+  /* CONCEPT CARD */
+  .concept-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--teal);
+  }
+  .concept-card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+  .concept-card p {
+    font-size: 0.95rem;
+    color: var(--slate);
+    line-height: 1.65;
+  }
+  .concept-card .highlight {
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  /* TWO-COL COMPARE */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .compare-card.left { border-top: 3px solid var(--slate); }
+  .compare-card.right { border-top: 3px solid var(--teal); }
+  .compare-card h4 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .compare-card.left h4 { color: var(--slate); }
+  .compare-card.right h4 { color: var(--teal); }
+  .compare-card ul {
+    list-style: none;
+    font-size: 0.9rem;
+    color: var(--slate);
+  }
+  .compare-card ul li { padding: 4px 0; }
+  .compare-card ul li::before { content: "→  "; color: var(--teal); }
+
+  /* CONFUSION MATRIX */
+  .matrix-wrap {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .matrix-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88rem;
+  }
+  .matrix-table th, .matrix-table td {
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .matrix-table th {
+    background: var(--dark);
+    color: var(--white);
+    font-weight: 500;
+    font-size: 0.82rem;
+  }
+  .matrix-table .row-head {
+    background: var(--dark);
+    color: var(--white);
+    font-weight: 500;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  .cell-tp { background: var(--green-light); color: var(--green); font-weight: 700; }
+  .cell-fn { background: var(--red-light); color: var(--red); font-weight: 700; }
+  .cell-fp { background: var(--amber-light); color: var(--amber); font-weight: 700; }
+  .cell-tn { background: var(--green-light); color: var(--green); font-weight: 700; }
+  .cell-label { font-size: 1.2rem; }
+  .cell-desc { font-size: 0.78rem; font-weight: 400; margin-top: 4px; color: var(--slate); }
+
+  /* METRICS ROW */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--slate);
+    margin-bottom: 6px;
+  }
+  .metric-formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--teal);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .metric-desc {
+    font-size: 0.8rem;
+    color: var(--slate);
+    line-height: 1.4;
+  }
+
+  /* AUC TABLE */
+  .auc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .auc-table th {
+    background: var(--dark);
+    color: var(--white);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+  .auc-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--slate);
+  }
+  .auc-table tr:last-child td { border-bottom: none; }
+  .auc-table tr:nth-child(even) td { background: var(--light); }
+  .auc-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  /* PIPELINE */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .pipeline-step {
+    flex: 1;
+    min-width: 110px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-right: none;
+    padding: 16px 12px;
+    text-align: center;
+    position: relative;
+  }
+  .pipeline-step:first-child { border-radius: 8px 0 0 8px; }
+  .pipeline-step:last-child { border-right: 1px solid var(--border); border-radius: 0 8px 8px 0; }
+  .pipeline-step::after {
+    content: '▶';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--teal);
+    font-size: 12px;
+    z-index: 1;
+    background: var(--light);
+    padding: 2px;
+  }
+  .pipeline-step:last-child::after { display: none; }
+  .step-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal);
+    margin-bottom: 6px;
+  }
+  .step-desc {
+    font-size: 0.8rem;
+    color: var(--slate);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* QUIZ SECTION */
+  .quiz-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-top: 24px;
+  }
+  .quiz-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .quiz-icon {
+    width: 32px; height: 32px;
+    background: var(--teal-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .quiz-block-header h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
+  }
+  .quiz-block-header span {
+    font-size: 0.78rem;
+    color: var(--slate);
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .question { margin-bottom: 28px; }
+  .question:last-child { margin-bottom: 0; }
+  .q-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--dark);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .q-num {
+    display: inline-block;
+    background: var(--dark);
+    color: var(--white);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--slate);
+    background: var(--light);
+    user-select: none;
+  }
+  .option:hover { border-color: var(--teal); color: var(--dark); background: var(--teal-light); }
+  .option input[type="radio"] { display: none; }
+  .option-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--teal);
+    min-width: 18px;
+    margin-top: 1px;
+  }
+  .option.correct {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .option.correct .option-letter { color: var(--green); }
+  .option.wrong {
+    border-color: var(--red);
+    background: var(--red-light);
+    color: var(--red);
+  }
+  .option.wrong .option-letter { color: var(--red); }
+  .option.disabled { cursor: default; pointer-events: none; }
+  .option.faded { opacity: 0.45; }
+
+  .feedback {
+    display: none;
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .feedback.correct-fb { background: var(--green-light); color: var(--green); border: 1px solid #bbf7d0; }
+  .feedback.wrong-fb { background: var(--red-light); color: #991b1b; border: 1px solid #fecaca; }
+  .feedback.show { display: block; }
+  .feedback strong { font-weight: 600; }
+
+  /* SCORE BADGE */
+  .score-display {
+    display: none;
+    margin-top: 20px;
+    padding: 14px 20px;
+    background: var(--dark);
+    color: var(--white);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+  }
+  .score-display.show { display: block; }
+
+  /* CLINICAL CALLOUT */
+  .clinical {
+    background: linear-gradient(135deg, #f0fdf9 0%, #e6fffa 100%);
+    border: 1px solid #a7f3d0;
+    border-left: 4px solid var(--teal);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: #065f46;
+    line-height: 1.6;
+  }
+  .clinical strong { font-weight: 600; color: var(--teal); }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--dark);
+    color: #64748b;
+    text-align: center;
+    padding: 28px 24px;
+    font-size: 0.82rem;
+  }
+  .footer span { color: var(--teal); }
+
+  /* FINAL SCORE */
+  .final-score-wrap {
+    background: var(--white);
+    border: 2px solid var(--teal);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin-top: 48px;
+    display: none;
+  }
+  .final-score-wrap.show { display: block; }
+  .final-score-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 4rem;
+    color: var(--teal);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .final-score-label {
+    font-size: 0.9rem;
+    color: var(--slate);
+    margin-bottom: 16px;
+  }
+  .final-score-msg {
+    font-size: 1rem;
+    color: var(--dark);
+    font-weight: 500;
+  }
+  .reset-btn {
+    margin-top: 20px;
+    padding: 10px 28px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s;
+  }
+  .reset-btn:hover { background: #0f766e; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">Lecture Review</div>
+  <h1>Classification in<br><em>Machine Learning</em></h1>
+  <p>Review the key concepts from today's lecture, then test your understanding with two questions per section.</p>
+  <div class="hero-meta">
+    <span><span class="dot"></span> Big Data Analytics & Decision Support</span>
+    <span><span class="dot"></span> King Hussein Cancer Center</span>
+    <span><span class="dot"></span> 7 Sections · 14 Questions</span>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label" id="progressLabel">0 / 14 questions answered</div>
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: Regression vs Classification -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.1s">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">From Regression to Classification</h2>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card left">
+        <h4>Regression</h4>
+        <ul>
+          <li>Predicts a <strong>continuous number</strong></li>
+          <li>How many days will this patient stay?</li>
+          <li>What will this patient's WBC be?</li>
+          <li>Output: 7.3 days, 11.2 × 10³/µL</li>
+        </ul>
+      </div>
+      <div class="compare-card right">
+        <h4>Classification ← Today</h4>
+        <ul>
+          <li>Predicts a <strong>category or label</strong></li>
+          <li>Will this patient be readmitted?</li>
+          <li>Is this tumor malignant or benign?</li>
+          <li>Output: Yes / No / Stage I–IV</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clinical">
+      <strong>Clinical connection:</strong> Most clinical decisions are classification decisions — diagnosis, triage, risk stratification. ML gives us a systematic way to automate and scale these judgements.
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q1" data-answer="B">
+        <p class="q-text"><span class="q-num">Q1</span> A model is trained to predict whether a cancer patient will develop febrile neutropenia within 30 days of chemotherapy. This is best described as a:</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q1" value="A"><span class="option-letter">A</span> Regression problem, because the outcome depends on lab values</label>
+          <label class="option"><input type="radio" name="q1" value="B"><span class="option-letter">B</span> Binary classification problem, because the outcome is yes or no</label>
+          <label class="option"><input type="radio" name="q1" value="C"><span class="option-letter">C</span> Multi-class classification problem, because there are many possible outcomes</label>
+          <label class="option"><input type="radio" name="q1" value="D"><span class="option-letter">D</span> Neither, because clinical outcomes cannot be modelled</label>
+        </div>
+        <div class="feedback correct-fb" id="q1-fb-correct"><strong>✓ Correct.</strong> The outcome has exactly two categories (develops febrile neutropenia: Yes / No), making this a binary classification problem. The fact that the inputs are lab values doesn't determine the problem type — the <em>output</em> does.</div>
+        <div class="feedback wrong-fb" id="q1-fb-wrong"><strong>✗ Not quite.</strong> The key question is: what kind of output does the model produce? Here the output is Yes or No — a category, not a number. That makes it binary classification. The problem type is always defined by the output, not the inputs.</div>
+      </div>
+
+      <div class="question" data-qid="q2" data-answer="C">
+        <p class="q-text"><span class="q-num">Q2</span> A model assigns each patient to one of four triage levels: Low, Medium, High, or Critical. This is an example of:</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q2" value="A"><span class="option-letter">A</span> Binary classification</label>
+          <label class="option"><input type="radio" name="q2" value="B"><span class="option-letter">B</span> Regression</label>
+          <label class="option"><input type="radio" name="q2" value="C"><span class="option-letter">C</span> Multi-class classification</label>
+          <label class="option"><input type="radio" name="q2" value="D"><span class="option-letter">D</span> Unsupervised learning</label>
+        </div>
+        <div class="feedback correct-fb" id="q2-fb-correct"><strong>✓ Correct.</strong> Four possible category labels (Low / Medium / High / Critical) makes this multi-class classification. Binary classification would only have two options.</div>
+        <div class="feedback wrong-fb" id="q2-fb-wrong"><strong>✗ Not quite.</strong> When the output is a category — and there are more than two categories — it's multi-class classification. Regression produces a number; binary classification has two outcomes; unsupervised learning has no labels at all.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: Decision Boundaries -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.2s">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Decision Boundaries: Linear vs. Non-Linear</h2>
+    </div>
+
+    <div class="concept-card">
+      <h3>What is a Decision Boundary?</h3>
+      <p>A decision boundary is the <span class="highlight">line, curve, or surface</span> a classifier draws in feature space to separate one class from another. Everything on one side gets one label; everything on the other side gets a different label.</p>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card left">
+        <h4>Linear Boundary</h4>
+        <ul>
+          <li>A straight line (2D) or flat plane (higher dims)</li>
+          <li>Clinical analogy: "Refer if PSA &gt; 4 ng/mL"</li>
+          <li>Simple, interpretable, may underfit</li>
+          <li>Used by: Logistic Regression</li>
+        </ul>
+      </div>
+      <div class="compare-card right">
+        <h4>Non-Linear Boundary</h4>
+        <ul>
+          <li>A curve or complex shape</li>
+          <li>Captures interactions between features</li>
+          <li>More flexible, risk of overfitting</li>
+          <li>Used by: Decision Trees, Neural Networks, SVMs</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="clinical">
+      <strong>Key insight:</strong> A linear boundary is like a single clinical cutoff. A non-linear boundary is like clinical gestalt — weighing many factors in complex, interacting ways. More complex is not always better.
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q3" data-answer="A">
+        <p class="q-text"><span class="q-num">Q3</span> A clinician says: "We flag a patient as high-risk if their ECOG score is above 2 AND their WBC is above 15." Which type of decision boundary does this most resemble?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q3" value="A"><span class="option-letter">A</span> Non-linear, because it involves an interaction between two features</label>
+          <label class="option"><input type="radio" name="q3" value="B"><span class="option-letter">B</span> Linear, because it uses simple threshold values</label>
+          <label class="option"><input type="radio" name="q3" value="C"><span class="option-letter">C</span> It is not a decision boundary — it is a clinical rule</label>
+          <label class="option"><input type="radio" name="q3" value="D"><span class="option-letter">D</span> Linear, because only two features are used</label>
+        </div>
+        <div class="feedback correct-fb" id="q3-fb-correct"><strong>✓ Correct.</strong> Using an AND condition between two features creates an interaction — the boundary in feature space is not a single straight line separating the classes. This kind of rule maps to a non-linear (specifically, axis-aligned rectangular) decision boundary.</div>
+        <div class="feedback wrong-fb" id="q3-fb-wrong"><strong>✗ Not quite.</strong> Although each individual threshold (ECOG &gt; 2, WBC &gt; 15) is a linear rule, combining them with AND creates an interaction between the two features. The resulting boundary in 2D feature space is not a single straight line — it's an L-shaped region, which is non-linear.</div>
+      </div>
+
+      <div class="question" data-qid="q4" data-answer="D">
+        <p class="q-text"><span class="q-num">Q4</span> Which of the following is the main risk of using a very complex (highly non-linear) decision boundary?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q4" value="A"><span class="option-letter">A</span> The model will always underfit the training data</label>
+          <label class="option"><input type="radio" name="q4" value="B"><span class="option-letter">B</span> The model cannot be applied to clinical data</label>
+          <label class="option"><input type="radio" name="q4" value="C"><span class="option-letter">C</span> The model will produce linear predictions</label>
+          <label class="option"><input type="radio" name="q4" value="D"><span class="option-letter">D</span> The model may overfit — learning noise in the training data that doesn't generalise to new patients</label>
+        </div>
+        <div class="feedback correct-fb" id="q4-fb-correct"><strong>✓ Correct.</strong> Overfitting is the primary risk of complex non-linear models. The model learns the quirks and noise of the training set rather than true underlying patterns, so performance drops when applied to new patients.</div>
+        <div class="feedback wrong-fb" id="q4-fb-wrong"><strong>✗ Not quite.</strong> A very complex boundary is more likely to <em>overfit</em> — memorising the training data, including its noise — rather than underfit. Underfitting is the risk of overly simple models, not complex ones.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: The Classifier Pipeline -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.25s">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">How a Classifier Works</h2>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="step-label">Input Features</div>
+        <div class="step-desc">Age, ECOG,<br>WBC, Admits</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Model</div>
+        <div class="step-desc">Learns patterns<br>from data</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Probability</div>
+        <div class="step-desc">P(readmit)<br>= 0.73</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Threshold</div>
+        <div class="step-desc">If P &gt; 0.5<br>→ Positive</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-label">Class Label</div>
+        <div class="step-desc">Readmitted:<br>YES</div>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>The Threshold is a Clinical Decision</h3>
+      <p>Most classifiers output a <span class="highlight">probability</span>, not a label directly. You choose the threshold that matches your clinical priorities. Lowering the threshold (e.g. from 0.5 to 0.3) catches more at-risk patients but raises more false alarms. This tradeoff is a clinical — not just a statistical — choice.</p>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q5" data-answer="B">
+        <p class="q-text"><span class="q-num">Q5</span> A readmission classifier outputs a probability of 0.42 for a patient. The current classification threshold is 0.5. What label does the patient receive?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q5" value="A"><span class="option-letter">A</span> Readmitted (Positive), because 0.42 is close to 0.5</label>
+          <label class="option"><input type="radio" name="q5" value="B"><span class="option-letter">B</span> Not Readmitted (Negative), because 0.42 is below the threshold of 0.5</label>
+          <label class="option"><input type="radio" name="q5" value="C"><span class="option-letter">C</span> The model cannot make a decision when probability is this close to 0.5</label>
+          <label class="option"><input type="radio" name="q5" value="D"><span class="option-letter">D</span> Readmitted (Positive), because the probability is above 0.4</label>
+        </div>
+        <div class="feedback correct-fb" id="q5-fb-correct"><strong>✓ Correct.</strong> The rule is simple: if P ≥ threshold → Positive; if P &lt; threshold → Negative. Since 0.42 &lt; 0.5, the patient is labelled Negative (Not Readmitted). The threshold is a hard cutoff — proximity doesn't matter.</div>
+        <div class="feedback wrong-fb" id="q5-fb-wrong"><strong>✗ Not quite.</strong> The threshold acts as a hard cutoff. Since 0.42 is strictly below 0.5, the label is Negative (Not Readmitted). The model always produces a label — it doesn't abstain when values are close to the threshold.</div>
+      </div>
+
+      <div class="question" data-qid="q6" data-answer="C">
+        <p class="q-text"><span class="q-num">Q6</span> The oncology team decides to lower the classification threshold from 0.5 to 0.3 to catch more at-risk patients. What is the most likely consequence of this change?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q6" value="A"><span class="option-letter">A</span> The model will become more accurate overall</label>
+          <label class="option"><input type="radio" name="q6" value="B"><span class="option-letter">B</span> Fewer patients will be flagged as high risk</label>
+          <label class="option"><input type="radio" name="q6" value="C"><span class="option-letter">C</span> More patients will be flagged — some correctly, some as false alarms</label>
+          <label class="option"><input type="radio" name="q6" value="D"><span class="option-letter">D</span> The model's AUC will improve</label>
+        </div>
+        <div class="feedback correct-fb" id="q6-fb-correct"><strong>✓ Correct.</strong> Lowering the threshold means more patients cross it — so more are labelled Positive. This catches more true positives (higher sensitivity) but also captures more false positives. AUC is unaffected by the threshold; it summarises performance across all thresholds.</div>
+        <div class="feedback wrong-fb" id="q6-fb-wrong"><strong>✗ Not quite.</strong> Lowering the threshold makes the classifier more "trigger-happy" — it flags more patients. This increases sensitivity (catches more true cases) but also increases false positives. Overall accuracy may actually decrease, and AUC doesn't change with threshold adjustment.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: Confusion Matrix -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.3s">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">The Confusion Matrix</h2>
+    </div>
+
+    <div class="matrix-wrap">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Predicted: Positive (YES)</th>
+            <th>Predicted: Negative (NO)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-head">Actual: Positive (YES)</td>
+            <td class="cell-tp">
+              <div class="cell-label">TP</div>
+              <div>True Positive</div>
+              <div class="cell-desc">Predicted YES, Actually YES ✓</div>
+            </td>
+            <td class="cell-fn">
+              <div class="cell-label">FN</div>
+              <div>False Negative</div>
+              <div class="cell-desc">Predicted NO, Actually YES ✗ — the dangerous miss</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="row-head">Actual: Negative (NO)</td>
+            <td class="cell-fp">
+              <div class="cell-label">FP</div>
+              <div>False Positive</div>
+              <div class="cell-desc">Predicted YES, Actually NO ✗ — the false alarm</div>
+            </td>
+            <td class="cell-tn">
+              <div class="cell-label">TN</div>
+              <div>True Negative</div>
+              <div class="cell-desc">Predicted NO, Actually NO ✓</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="clinical">
+      <strong>Sensitivity</strong> = TP / (TP + FN) — of all patients who WERE readmitted, how many did we catch?<br>
+      <strong>Specificity</strong> = TN / (TN + FP) — of all patients who were NOT readmitted, how many did we correctly clear?<br><br>
+      These are the same sensitivity and specificity you know from diagnostic testing — just applied to a model.
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q7" data-answer="B">
+        <p class="q-text"><span class="q-num">Q7</span> A readmission classifier is tested on 100 patients. 50 are truly at risk (Positive). The model flags 40 of them correctly, misses 10, raises 5 false alarms, and correctly clears 45 non-at-risk patients. What is TP?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q7" value="A"><span class="option-letter">A</span> 10</label>
+          <label class="option"><input type="radio" name="q7" value="B"><span class="option-letter">B</span> 40</label>
+          <label class="option"><input type="radio" name="q7" value="C"><span class="option-letter">C</span> 45</label>
+          <label class="option"><input type="radio" name="q7" value="D"><span class="option-letter">D</span> 5</label>
+        </div>
+        <div class="feedback correct-fb" id="q7-fb-correct"><strong>✓ Correct.</strong> TP = True Positives = patients who were actually at risk AND the model correctly flagged. That's 40. The 10 missed cases are FN. The 5 false alarms are FP. The 45 correctly cleared are TN.</div>
+        <div class="feedback wrong-fb" id="q7-fb-wrong"><strong>✗ Not quite.</strong> TP = patients the model correctly said were at risk. Out of 50 truly at-risk patients, the model caught 40 → TP = 40. The 10 it missed are False Negatives (FN = 10). The 5 false alarms are False Positives (FP = 5). The 45 correctly cleared are True Negatives (TN = 45).</div>
+      </div>
+
+      <div class="question" data-qid="q8" data-answer="D">
+        <p class="q-text"><span class="q-num">Q8</span> In the context of a cancer screening model, which type of error is generally considered more clinically dangerous?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q8" value="A"><span class="option-letter">A</span> False Positive (FP) — screening positive but no cancer</label>
+          <label class="option"><input type="radio" name="q8" value="B"><span class="option-letter">B</span> True Negative (TN) — correctly cleared</label>
+          <label class="option"><input type="radio" name="q8" value="C"><span class="option-letter">C</span> True Positive (TP) — correctly identified</label>
+          <label class="option"><input type="radio" name="q8" value="D"><span class="option-letter">D</span> False Negative (FN) — cancer missed by the model</label>
+        </div>
+        <div class="feedback correct-fb" id="q8-fb-correct"><strong>✓ Correct.</strong> A False Negative in cancer screening means a patient with cancer is told they are clear — they receive no follow-up or treatment. This missed diagnosis can be life-threatening. False Positives cause unnecessary anxiety and follow-up tests, which is a cost, but typically less dangerous.</div>
+        <div class="feedback wrong-fb" id="q8-fb-wrong"><strong>✗ Not quite.</strong> In cancer screening, the most dangerous error is the False Negative — a cancer that is present but missed by the model. The patient gets no treatment. False Positives (unnecessary further testing) are a burden, but the patient ultimately gets follow-up care.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: Evaluation Metrics -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.35s">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Evaluation Metrics</h2>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-name">Accuracy</div>
+        <div class="metric-formula">(TP+TN) / All</div>
+        <div class="metric-desc">Overall fraction correct. Can mislead with imbalanced classes.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Sensitivity</div>
+        <div class="metric-formula">TP / (TP+FN)</div>
+        <div class="metric-desc">Of true positives, how many did we catch? (Recall)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Specificity</div>
+        <div class="metric-formula">TN / (TN+FP)</div>
+        <div class="metric-desc">Of true negatives, how many did we correctly clear?</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Precision</div>
+        <div class="metric-formula">TP / (TP+FP)</div>
+        <div class="metric-desc">Of flagged patients, how many were truly at risk? (PPV)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">F1 Score</div>
+        <div class="metric-formula">2 × P×R / (P+R)</div>
+        <div class="metric-desc">Harmonic mean of precision and recall. Useful when both matter.</div>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <h3>The Accuracy Trap</h3>
+      <p>If 90% of patients are NOT readmitted, a model that always says "No" achieves <span class="highlight">90% accuracy</span> — but catches <span class="highlight">zero at-risk patients</span>. Always report sensitivity alongside accuracy in clinical settings.</p>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q9" data-answer="A">
+        <p class="q-text"><span class="q-num">Q9</span> Using the KHCC numbers from the lecture: TP=38, FN=12, FP=22, TN=428. What is the sensitivity of the model?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q9" value="A"><span class="option-letter">A</span> 76% — because 38 / (38 + 12) = 0.76</label>
+          <label class="option"><input type="radio" name="q9" value="B"><span class="option-letter">B</span> 63% — because 38 / (38 + 22) = 0.63</label>
+          <label class="option"><input type="radio" name="q9" value="C"><span class="option-letter">C</span> 95% — because 428 / (428 + 22) = 0.95</label>
+          <label class="option"><input type="radio" name="q9" value="D"><span class="option-letter">D</span> 93% — because (38+428) / 500 = 0.932</label>
+        </div>
+        <div class="feedback correct-fb" id="q9-fb-correct"><strong>✓ Correct.</strong> Sensitivity = TP / (TP + FN) = 38 / (38 + 12) = 38/50 = 0.76 = 76%. This tells us the model caught 76% of the patients who were truly at risk.</div>
+        <div class="feedback wrong-fb" id="q9-fb-wrong"><strong>✗ Not quite.</strong> Sensitivity = TP / (TP + FN). We need the denominator to be all patients who were truly positive (at risk). That's TP + FN = 38 + 12 = 50. So sensitivity = 38/50 = 76%. Option B is precision. Option C is specificity. Option D is accuracy.</div>
+      </div>
+
+      <div class="question" data-qid="q10" data-answer="C">
+        <p class="q-text"><span class="q-num">Q10</span> An oncologist says: "I need a model that never misses a true case, even if it raises some false alarms." Which metric should be maximised?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q10" value="A"><span class="option-letter">A</span> Specificity</label>
+          <label class="option"><input type="radio" name="q10" value="B"><span class="option-letter">B</span> Precision</label>
+          <label class="option"><input type="radio" name="q10" value="C"><span class="option-letter">C</span> Sensitivity (Recall)</label>
+          <label class="option"><input type="radio" name="q10" value="D"><span class="option-letter">D</span> Accuracy</label>
+        </div>
+        <div class="feedback correct-fb" id="q10-fb-correct"><strong>✓ Correct.</strong> "Never miss a true case" = maximise sensitivity (recall = TP / (TP + FN)). High sensitivity means few false negatives. The tradeoff is more false positives — but the oncologist has explicitly said they accept that.</div>
+        <div class="feedback wrong-fb" id="q10-fb-wrong"><strong>✗ Not quite.</strong> "Never miss a true case" means minimising false negatives — which means maximising sensitivity (recall). Specificity is about correctly clearing negative cases. Precision is about the quality of positive predictions. Accuracy is a blunt overall measure.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 6: ROC Curve & AUC -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.4s">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">ROC Curve &amp; AUC</h2>
+    </div>
+
+    <div class="concept-card">
+      <h3>The ROC Curve</h3>
+      <p>The ROC (Receiver Operating Characteristic) curve plots <span class="highlight">Sensitivity (TPR)</span> on the Y-axis against <span class="highlight">1 − Specificity (FPR)</span> on the X-axis across all possible thresholds. A perfect model curves toward the <strong>top-left corner</strong>. The diagonal line represents random guessing.</p>
+    </div>
+
+    <table class="auc-table">
+      <thead>
+        <tr><th>AUC Range</th><th>Interpretation</th><th>Clinical Context</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="auc-badge" style="background:#dcfce7;color:#16a34a">1.0</span></td>
+          <td>Perfect</td>
+          <td>Never seen in real clinical data</td>
+        </tr>
+        <tr>
+          <td><span class="auc-badge" style="background:#d1fae5;color:#059669">0.9 – 1.0</span></td>
+          <td>Excellent</td>
+          <td>Rare; very strong model</td>
+        </tr>
+        <tr>
+          <td><span class="auc-badge" style="background:#ccfbf1;color:#0d9488">0.8 – 0.9</span></td>
+          <td>Good</td>
+          <td>Many published oncology models</td>
+        </tr>
+        <tr>
+          <td><span class="auc-badge" style="background:#fef3c7;color:#d97706">0.7 – 0.8</span></td>
+          <td>Acceptable</td>
+          <td>Moderate; worth improving</td>
+        </tr>
+        <tr>
+          <td><span class="auc-badge" style="background:#fee2e2;color:#dc2626">0.5 – 0.7</span></td>
+          <td>Poor</td>
+          <td>Little better than guessing</td>
+        </tr>
+        <tr>
+          <td><span class="auc-badge" style="background:#fca5a5;color:#7f1d1d">0.5</span></td>
+          <td>Random</td>
+          <td>Coin flip — no clinical value</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="clinical">
+      <strong>Clinical interpretation:</strong> An AUC of 0.88 means the model correctly ranks a randomly chosen readmitted patient above a non-readmitted patient 88% of the time. Changing the threshold does <em>not</em> change the AUC.
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q11" data-answer="D">
+        <p class="q-text"><span class="q-num">Q11</span> On a ROC curve, what does a point in the top-left corner (Sensitivity ≈ 1, FPR ≈ 0) represent?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q11" value="A"><span class="option-letter">A</span> A model that always predicts the negative class</label>
+          <label class="option"><input type="radio" name="q11" value="B"><span class="option-letter">B</span> Random guessing</label>
+          <label class="option"><input type="radio" name="q11" value="C"><span class="option-letter">C</span> A model with very high specificity but very low sensitivity</label>
+          <label class="option"><input type="radio" name="q11" value="D"><span class="option-letter">D</span> A near-perfect classifier — catching almost all true positives with almost no false alarms</label>
+        </div>
+        <div class="feedback correct-fb" id="q11-fb-correct"><strong>✓ Correct.</strong> The top-left corner (Sensitivity = 1, FPR = 0) means the model catches every true case (no false negatives) while producing zero false positives. This is the ideal point — a perfect classifier sits here.</div>
+        <div class="feedback wrong-fb" id="q11-fb-wrong"><strong>✗ Not quite.</strong> The top-left corner represents the best possible performance: Sensitivity = 1 (all positives caught) and FPR = 0 (no false alarms). That's a near-perfect classifier. The diagonal line represents random guessing. The bottom-right corner would represent always predicting positive.</div>
+      </div>
+
+      <div class="question" data-qid="q12" data-answer="B">
+        <p class="q-text"><span class="q-num">Q12</span> A team trains two readmission models: Model A has AUC = 0.85 at threshold = 0.5. They then lower the threshold to 0.3. What happens to the AUC?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q12" value="A"><span class="option-letter">A</span> AUC increases because more patients are flagged</label>
+          <label class="option"><input type="radio" name="q12" value="B"><span class="option-letter">B</span> AUC stays the same — it is not affected by the threshold</label>
+          <label class="option"><input type="radio" name="q12" value="C"><span class="option-letter">C</span> AUC decreases because there are more false positives</label>
+          <label class="option"><input type="radio" name="q12" value="D"><span class="option-letter">D</span> AUC cannot be calculated after changing the threshold</label>
+        </div>
+        <div class="feedback correct-fb" id="q12-fb-correct"><strong>✓ Correct.</strong> AUC summarises model performance across <em>all</em> possible thresholds simultaneously — it is completely independent of any single threshold choice. Changing the threshold changes sensitivity and specificity at that operating point, but not the AUC.</div>
+        <div class="feedback wrong-fb" id="q12-fb-wrong"><strong>✗ Not quite.</strong> AUC = Area Under the ROC Curve, which is computed by sweeping across <em>all</em> thresholds. It is a threshold-independent measure of overall discriminating ability. Changing a single operating threshold changes the sensitivity/FPR tradeoff at that point, but doesn't touch the AUC.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 7: Class Imbalance -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" style="animation-delay:0.45s">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Class Imbalance</h2>
+    </div>
+
+    <div class="concept-card">
+      <h3>What Is Class Imbalance?</h3>
+      <p>Class imbalance occurs when one outcome is <span class="highlight">much more common</span> than the other. This is extremely common in oncology: adverse events, readmissions, and rare diagnoses are by definition rare. If 92% of patients are not readmitted, a model that always says "No" achieves 92% accuracy — but has <span class="highlight">zero clinical value</span>.</p>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card left">
+        <h4>Why It Matters</h4>
+        <ul>
+          <li>Accuracy is inflated and misleading</li>
+          <li>Sensitivity collapses toward zero</li>
+          <li>Model learns to always predict the majority class</li>
+          <li>Clinically dangerous if minority class = the sick patients</li>
+        </ul>
+      </div>
+      <div class="compare-card right">
+        <h4>What Can Be Done</h4>
+        <ul>
+          <li>Oversample the minority class (e.g. SMOTE)</li>
+          <li>Undersample the majority class</li>
+          <li>Use class weights during training</li>
+          <li>Report sensitivity, not just accuracy</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-block-header">
+        <div class="quiz-icon">🎯</div>
+        <h3>Check Your Understanding</h3>
+        <span>2 questions</span>
+      </div>
+
+      <div class="question" data-qid="q13" data-answer="A">
+        <p class="q-text"><span class="q-num">Q13</span> A dataset has 950 patients with no adverse event and 50 patients with an adverse event. A model predicts "No adverse event" for every patient. What is its accuracy?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q13" value="A"><span class="option-letter">A</span> 95% — but the model is clinically useless</label>
+          <label class="option"><input type="radio" name="q13" value="B"><span class="option-letter">B</span> 50% — because it is no better than guessing</label>
+          <label class="option"><input type="radio" name="q13" value="C"><span class="option-letter">C</span> 0% — because it never predicts the positive class</label>
+          <label class="option"><input type="radio" name="q13" value="D"><span class="option-letter">D</span> 5% — because only 5% of predictions matter</label>
+        </div>
+        <div class="feedback correct-fb" id="q13-fb-correct"><strong>✓ Correct.</strong> The model correctly predicts 950 out of 1000 patients (all the true negatives), so accuracy = 950/1000 = 95%. But it catches zero adverse events — its sensitivity is 0%. This perfectly illustrates why accuracy alone is insufficient with imbalanced data.</div>
+        <div class="feedback wrong-fb" id="q13-fb-wrong"><strong>✗ Not quite.</strong> Accuracy = correct predictions / total predictions. The model says "No" for everyone, and 950 out of 1000 patients truly have no adverse event, so it gets 950 right → 95% accuracy. But its sensitivity = 0/50 = 0%. High accuracy, zero clinical utility.</div>
+      </div>
+
+      <div class="question" data-qid="q14" data-answer="C">
+        <p class="q-text"><span class="q-num">Q14</span> When you receive the results of a new ML model for clinical use, which of the following is the most complete evaluation approach?</p>
+        <div class="options">
+          <label class="option"><input type="radio" name="q14" value="A"><span class="option-letter">A</span> Report only accuracy, since it summarises all predictions</label>
+          <label class="option"><input type="radio" name="q14" value="B"><span class="option-letter">B</span> Report only AUC, since it is threshold-independent</label>
+          <label class="option"><input type="radio" name="q14" value="C"><span class="option-letter">C</span> Report accuracy, sensitivity, specificity, and AUC — and inspect the class distribution</label>
+          <label class="option"><input type="radio" name="q14" value="D"><span class="option-letter">D</span> Report precision only, since it reflects the quality of positive predictions</label>
+        </div>
+        <div class="feedback correct-fb" id="q14-fb-correct"><strong>✓ Correct.</strong> No single metric tells the whole story. Accuracy can mislead with imbalanced data; AUC doesn't tell you about real-world operating performance; sensitivity and specificity alone don't reveal overall accuracy. A complete evaluation uses all of them together — and always checks class distribution first.</div>
+        <div class="feedback wrong-fb" id="q14-fb-wrong"><strong>✗ Not quite.</strong> Each metric reveals a different dimension of model performance. With imbalanced clinical data, accuracy alone is dangerous; AUC alone doesn't tell you operational performance; precision alone ignores missed cases. The best practice is to report multiple metrics and always check class distribution before interpreting anything.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL SCORE -->
+  <div class="final-score-wrap" id="finalScore">
+    <div class="final-score-num" id="finalScoreNum">0/14</div>
+    <div class="final-score-label">Questions answered correctly</div>
+    <div class="final-score-msg" id="finalScoreMsg"></div>
+    <button class="reset-btn" onclick="resetQuiz()">Try Again</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  Classification in Machine Learning — <span>Big Data Analytics & Decision Support</span><br>
+  King Hussein Cancer Center · Interactive Lecture Review
+</div>
+
+<script>
+  const totalQ = 14;
+  let answered = {};
+  let correct = {};
+
+  function updateProgress() {
+    const count = Object.keys(answered).length;
+    const pct = (count / totalQ) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = count + ' / ' + totalQ + ' questions answered';
+
+    if (count === totalQ) showFinalScore();
+  }
+
+  function showFinalScore() {
+    const score = Object.values(correct).filter(Boolean).length;
+    const el = document.getElementById('finalScore');
+    const numEl = document.getElementById('finalScoreNum');
+    const msgEl = document.getElementById('finalScoreMsg');
+    numEl.textContent = score + ' / ' + totalQ;
+    let msg = '';
+    if (score === totalQ) msg = 'Perfect score! You have mastered this material.';
+    else if (score >= 11) msg = 'Excellent work — strong grasp of the concepts.';
+    else if (score >= 8) msg = 'Good understanding. Review the sections where you missed questions.';
+    else msg = 'Keep reviewing — revisit the lecture slides and try again.';
+    msgEl.textContent = msg;
+    numEl.style.color = score >= 10 ? 'var(--teal)' : score >= 7 ? 'var(--amber)' : 'var(--red)';
+    el.classList.add('show');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function resetQuiz() {
+    answered = {};
+    correct = {};
+    document.querySelectorAll('.option').forEach(o => {
+      o.classList.remove('correct', 'wrong', 'disabled', 'faded');
+    });
+    document.querySelectorAll('.feedback').forEach(f => f.classList.remove('show'));
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    document.getElementById('finalScore').classList.remove('show');
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.question').forEach(qBlock => {
+    const qid = qBlock.dataset.qid;
+    const answer = qBlock.dataset.answer;
+
+    qBlock.querySelectorAll('.option').forEach(option => {
+      option.addEventListener('click', function () {
+        if (answered[qid]) return;
+        answered[qid] = true;
+
+        const val = option.querySelector('input').value;
+        const isCorrect = val === answer;
+        correct[qid] = isCorrect;
+
+        // Style options
+        qBlock.querySelectorAll('.option').forEach(o => {
+          const oVal = o.querySelector('input').value;
+          o.classList.add('disabled');
+          if (oVal === answer) {
+            o.classList.add('correct');
+          } else if (oVal === val && !isCorrect) {
+            o.classList.add('wrong');
+          } else {
+            o.classList.add('faded');
+          }
+        });
+
+        // Show feedback
+        const fbCorrect = document.getElementById(qid + '-fb-correct');
+        const fbWrong = document.getElementById(qid + '-fb-wrong');
+        if (isCorrect) {
+          fbCorrect.classList.add('show');
+        } else {
+          fbWrong.classList.add('show');
+        }
+
+        updateProgress();
+      });
+    });
+  });
+
+  // Stagger section animations
+  document.querySelectorAll('.section').forEach((s, i) => {
+    s.style.animationDelay = (0.1 + i * 0.08) + 's';
+  });
+
+  updateProgress();
+</script>
+</body>
+</html>
