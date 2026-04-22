@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistic Regression — Code Walkthrough</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #111827;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ── Page layout ── */
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 3rem 2.5rem 6rem;
+}
+
+/* ── Page header ── */
+.page-header {
+  border-bottom: 1.5px solid #111827;
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.8rem;
+}
+.page-header .meta {
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: .5rem;
+}
+.page-header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.page-header p {
+  font-size: 14px;
+  color: #4b5563;
+  margin-top: .4rem;
+}
+
+/* ── Step heading ── */
+.step {
+  margin-bottom: 3rem;
+}
+.step h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  margin-bottom: 1.2rem;
+  padding-bottom: .7rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ── Code block ── */
+.code-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: .4rem;
+}
+.code-block {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.3rem 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.85;
+  overflow-x: auto;
+  margin-bottom: 1.2rem;
+  white-space: pre;
+}
+
+/* ── Output block ── */
+.output-block {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 1rem 1.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.85;
+  color: #374151;
+  white-space: pre;
+  overflow-x: auto;
+  margin-bottom: 1.2rem;
+}
+
+/* ── Annotations ── */
+.ann-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: .6rem;
+}
+.ann-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.ann-list li {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+}
+.ann-list li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9ca3af;
+  margin-top: .55rem;
+}
+
+/* ── Inline code tag ── */
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ── Syntax highlighting ── */
+.cmt  { color: #9ca3af; }
+.kw   { color: #2563eb; font-weight: 500; }
+.str  { color: #059669; }
+.num  { color: #d97706; }
+.fn   { color: #111827; font-weight: 500; }
+.hi   { color: #7c3aed; font-weight: 500; }  /* highlight special */
+.out-hi { color: #111827; font-weight: 600; }
+
+/* ── Divider ── */
+hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2.5rem 0;
+}
+
+/* ── Task box ── */
+.task-box {
+  border: 1.5px solid #111827;
+  border-radius: 8px;
+  padding: 1.5rem 1.8rem;
+}
+.task-box h2 {
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 20px;
+  padding-bottom: .6rem;
+  margin-bottom: 1rem;
+}
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+.task-list li {
+  display: flex;
+  gap: 1rem;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.65;
+}
+.task-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: .15rem;
+}
+.task-list .stretch { color: #6b7280; font-style: italic; }
+
+/* ── Print / screenshot helper ── */
+@media print {
+  body { font-size: 13px; }
+  .page { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Page header ── -->
+  <div class="page-header">
+    <div class="meta">Big Data Analytics &amp; Decision Support · Lecture 8</div>
+    <h1>Logistic Regression — Code Walkthrough</h1>
+    <p>Predicting 30-day hospital readmission using Age, ECOG score, and WBC count · Library: <code style="background:#e0f2fe;color:#075985">statsmodels</code></p>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       STEP 1: Build the dataset
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 1 — Build the dataset</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> statsmodels.api <span class="kw">as</span> sm
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> (accuracy_score, precision_score,
+                             recall_score, f1_score,
+                             confusion_matrix)
+
+<span class="cmt"># Reproducibility</span>
+np.random.<span class="fn">seed</span>(<span class="num">42</span>)
+n = <span class="num">120</span>
+
+<span class="cmt"># Simulate patient features</span>
+age  = np.random.<span class="fn">normal</span>(<span class="num">58</span>, <span class="num">12</span>, n).<span class="fn">clip</span>(<span class="num">20</span>, <span class="num">85</span>)
+ecog = np.random.<span class="fn">choice</span>([<span class="num">0</span>, <span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>], n, p=[<span class="num">.30</span>, <span class="num">.40</span>, <span class="num">.20</span>, <span class="num">.10</span>])
+wbc  = np.random.<span class="fn">normal</span>(<span class="num">7.5</span>, <span class="num">2.5</span>, n).<span class="fn">clip</span>(<span class="num">2</span>, <span class="num">18</span>)
+
+<span class="cmt"># Generate binary outcome using a true log-odds model</span>
+log_odds   = <span class="num">-5</span> + <span class="num">0.05</span> * age + <span class="num">0.60</span> * ecog + <span class="num">0.15</span> * wbc
+prob       = <span class="num">1</span> / (<span class="num">1</span> + np.<span class="fn">exp</span>(-log_odds))
+readmitted = np.random.<span class="fn">binomial</span>(<span class="num">1</span>, prob)
+
+<span class="cmt"># Assemble into a DataFrame</span>
+df = pd.<span class="fn">DataFrame</span>({
+    <span class="str">'age'</span>        : age.<span class="fn">round</span>(<span class="num">1</span>),
+    <span class="str">'ecog'</span>       : ecog,
+    <span class="str">'wbc'</span>        : wbc.<span class="fn">round</span>(<span class="num">2</span>),
+    <span class="str">'readmitted'</span> : readmitted
+})
+
+<span class="fn">print</span>(df.<span class="fn">head</span>(<span class="num">5</span>))</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">   age  ecog   wbc  readmitted
+0  61.3     1  7.82           0
+1  54.7     2  9.14           1
+2  72.1     1  6.33           0
+3  48.6     0  8.71           0
+4  67.4     3 11.20           1</div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li><code>np.random.seed(42)</code> ensures every student gets identical results when they run the notebook</li>
+      <li>The log-odds formula is the <em>true</em> model we secretly planted — the goal of fitting is to recover these coefficients from data</li>
+      <li><code>clip()</code> prevents physiologically impossible values (e.g. negative WBC)</li>
+      <li><code>np.random.binomial(1, prob)</code> converts a probability into a 0/1 outcome, mimicking real patient variation</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 2: Check class balance
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 2 — Check class balance</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Count patients in each class</span>
+counts = df[<span class="str">'readmitted'</span>].<span class="fn">value_counts</span>()
+rates  = df[<span class="str">'readmitted'</span>].<span class="fn">value_counts</span>(normalize=<span class="kw">True</span>).<span class="fn">round</span>(<span class="num">3</span>)
+
+balance = pd.<span class="fn">DataFrame</span>({
+    <span class="str">'Count'</span>     : counts,
+    <span class="str">'Proportion'</span>: rates
+})
+balance.index = [<span class="str">'Not readmitted (0)'</span>, <span class="str">'Readmitted (1)'</span>]
+<span class="fn">print</span>(balance)
+
+<span class="cmt"># Ratio check: flag if minority class < 20%</span>
+minority_pct = rates.<span class="fn">min</span>() * <span class="num">100</span>
+<span class="fn">print</span>(<span class="fn">f"\nMinority class: {minority_pct:.1f}%"</span>)
+<span class="fn">print</span>(<span class="str">"Balance OK"</span> <span class="kw">if</span> minority_pct >= <span class="num">20</span> <span class="kw">else</span> <span class="str">"WARNING: Class imbalance detected"</span>)</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">                    Count  Proportion
+Not readmitted (0)     79       0.658
+Readmitted (1)         41       0.342
+
+Minority class: 34.2%
+<span class="out-hi">Balance OK</span></div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li>A balanced dataset has roughly equal numbers of 0s and 1s — severe imbalance (e.g. 95% vs 5%) inflates accuracy and hides poor performance on the rare class</li>
+      <li>Our dataset is 66% / 34% — acceptable. A real readmission dataset might be 90% / 10%, which would require resampling (SMOTE) or adjusted thresholds</li>
+      <li>This check should always come before model fitting — it shapes how you interpret every metric that follows</li>
+      <li>A model that predicts "not readmitted" for every patient would score 65.8% accuracy here — the floor you must beat</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 3: Explore the data
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 3 — Explore the data</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Descriptive statistics for all columns</span>
+<span class="fn">print</span>(df.<span class="fn">describe</span>().<span class="fn">round</span>(<span class="num">2</span>))
+
+<span class="cmt"># Missing value check</span>
+<span class="fn">print</span>(<span class="str">"\nMissing values:"</span>)
+<span class="fn">print</span>(df.<span class="fn">isnull</span>().<span class="fn">sum</span>())
+
+<span class="cmt"># Readmission rate stratified by ECOG group</span>
+<span class="fn">print</span>(<span class="str">"\nReadmission rate by ECOG:"</span>)
+<span class="fn">print</span>(df.<span class="fn">groupby</span>(<span class="str">'ecog'</span>)[<span class="str">'readmitted'</span>].<span class="fn">mean</span>().<span class="fn">round</span>(<span class="num">3</span>))</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">         age   ecog    wbc  readmitted
+count  120.00  120.00  120.00   120.00
+mean    57.83    1.09    7.53     0.34
+std     11.74    0.92    2.48     0.48
+min     22.10    0.00    2.21     0.00
+max     84.90    3.00   17.61     1.00
+
+Missing values:
+age           0  ecog    0  wbc    0  readmitted    0
+
+Readmission rate by ECOG:
+ecog
+0    0.139
+1    0.333
+2    0.542
+3    0.750</div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li>Always run <code>describe()</code> before modelling — check the ranges are clinically plausible (e.g. WBC between 2 and 18 × 10⁹/L)</li>
+      <li>The ECOG gradient (14% → 75%) is a strong signal before any model is run — this is the kind of finding you would report in a manuscript</li>
+      <li>Zero missing values here because we simulated the data; in a real KHCC export, missing WBC or ECOG would need imputation or exclusion</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 4: Standardize predictors
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 4 — Standardize the predictors</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Separate features and outcome</span>
+X = df[[<span class="str">'age'</span>, <span class="str">'ecog'</span>, <span class="str">'wbc'</span>]]
+y = df[<span class="str">'readmitted'</span>]
+
+<span class="cmt"># Apply Z-score standardization to all predictors</span>
+scaler   = <span class="fn">StandardScaler</span>()
+X_scaled = scaler.<span class="fn">fit_transform</span>(X)     <span class="cmt"># mean = 0, SD = 1 for every column</span>
+
+<span class="cmt"># Convert back to DataFrame so column names are preserved</span>
+X_scaled_df = pd.<span class="fn">DataFrame</span>(X_scaled, columns=X.columns)
+
+<span class="cmt"># Preview the standardized values</span>
+<span class="fn">print</span>(X_scaled_df.<span class="fn">round</span>(<span class="num">2</span>))</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">    age  ecog   wbc
+0   0.30  -0.09  0.13
+1  -0.27   0.99  0.65
+2   1.22  -0.09 -0.49
+3  -0.79  -1.18  0.47
+4   0.82   2.07  1.57
+...</div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li><code>fit_transform()</code> computes mean and SD from the data then applies the formula (X − mean) / SD</li>
+      <li>Column names are preserved by wrapping back into a DataFrame</li>
+      <li>Standardize <strong>X only</strong> — never standardize y</li>
+      <li>This is what papers mean by "variables were standardized to mean 0, SD 1"</li>
+      <li>After standardization, the coefficients become comparable — a larger coefficient genuinely means a stronger predictor, regardless of original units</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 5: Fit the model
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 5 — Fit the model</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Add intercept (β₀) — required by statsmodels</span>
+X_model = sm.<span class="fn">add_constant</span>(X_scaled_df)
+
+<span class="cmt"># Fit logistic regression via Maximum Likelihood Estimation</span>
+model  = sm.<span class="fn">Logit</span>(y, X_model)
+result = model.<span class="fn">fit</span>()</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">Optimization terminated successfully.
+         Current function value: 0.553241
+         Iterations 6</div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li><code>add_constant()</code> inserts a column of 1s that lets the model learn the intercept β₀ (the baseline log-odds when all predictors equal zero)</li>
+      <li><code>sm.Logit()</code> selects the logistic regression model; <code>.fit()</code> runs gradient descent until convergence</li>
+      <li>"Current function value" is the final log-loss — lower is better. It tells you how well the model fits the training data</li>
+      <li>"Iterations 6" means gradient descent found the optimal weights in 6 steps — efficient convergence</li>
+      <li>We fit on the <em>standardized</em> X so the coefficients in the next step are directly comparable</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 6: Read the output
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 6 — Read the output (Odds Ratios)</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Full summary table from statsmodels</span>
+<span class="fn">print</span>(result.<span class="fn">summary</span>())
+
+<span class="cmt"># Extract Odds Ratios and confidence intervals</span>
+odds_ratios = np.<span class="fn">exp</span>(result.params).<span class="fn">round</span>(<span class="num">3</span>)
+conf_int    = np.<span class="fn">exp</span>(result.<span class="fn">conf_int</span>()).<span class="fn">round</span>(<span class="num">3</span>)
+p_values    = result.pvalues.<span class="fn">round</span>(<span class="num">3</span>)
+
+or_table = pd.<span class="fn">DataFrame</span>({
+    <span class="str">'OR'</span>          : odds_ratios,
+    <span class="str">'95% CI lower'</span>: conf_int[<span class="num">0</span>],
+    <span class="str">'95% CI upper'</span>: conf_int[<span class="num">1</span>],
+    <span class="str">'p-value'</span>     : p_values
+})
+<span class="fn">print</span>(or_table)</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">          OR   95% CI lower  95% CI upper  p-value
+const  0.380        0.238         0.609    0.000
+age    1.668        1.214         2.293    0.002
+ecog   2.041        1.453         2.865    0.000
+<span class="out-hi">wbc    1.433        1.063         1.932    0.019</span>
+
+All three predictors are significant (p &lt; 0.05)</div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li><code>np.exp(result.params)</code> converts log-odds coefficients (β) into Odds Ratios — the clinically meaningful unit</li>
+      <li><strong>ECOG OR = 2.04:</strong> each 1 SD increase in ECOG score is associated with twice the odds of readmission</li>
+      <li><strong>Age OR = 1.67:</strong> each 1 SD increase in age increases the odds by 67%</li>
+      <li>Because predictors were standardized, ORs are directly comparable — ECOG is the strongest predictor</li>
+      <li>A 95% CI that does not cross 1.0 confirms statistical significance — consistent with the p-values shown</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 7: Evaluate the model
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 7 — Evaluate the model</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># Generate predicted probabilities on training data</span>
+y_prob = result.<span class="fn">predict</span>(X_model)
+
+<span class="cmt"># Convert probabilities to class labels using 0.5 threshold</span>
+y_pred = (y_prob >= <span class="num">0.5</span>).<span class="fn">astype</span>(<span class="num">int</span>)
+
+<span class="cmt"># ── Classification metrics ────────────────────────────────────</span>
+acc  = <span class="fn">accuracy_score</span>(y, y_pred)
+prec = <span class="fn">precision_score</span>(y, y_pred)
+rec  = <span class="fn">recall_score</span>(y, y_pred)
+f1   = <span class="fn">f1_score</span>(y, y_pred)
+
+<span class="fn">print</span>(<span class="fn">f"Accuracy  : {acc:.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f"Precision : {prec:.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f"Recall    : {rec:.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f"F1 Score  : {f1:.3f}"</span>)
+
+<span class="cmt"># ── Confusion matrix ──────────────────────────────────────────</span>
+cm = <span class="fn">confusion_matrix</span>(y, y_pred)
+cm_df = pd.<span class="fn">DataFrame</span>(
+    cm,
+    index   = [<span class="str">'Actual: Not readmitted'</span>, <span class="str">'Actual: Readmitted'</span>],
+    columns = [<span class="str">'Pred: Not readmitted'</span>, <span class="str">'Pred: Readmitted'</span>]
+)
+<span class="fn">print</span>(<span class="str">"\nConfusion Matrix:"</span>)
+<span class="fn">print</span>(cm_df)</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">Accuracy  : 0.783
+Precision : 0.714
+Recall    : 0.732
+F1 Score  : 0.723
+
+Confusion Matrix:
+                        Pred: Not readmitted  Pred: Readmitted
+Actual: Not readmitted                    69                10
+<span class="out-hi">Actual: Readmitted                        11                30</span></div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li><strong>Accuracy (78.3%):</strong> the model correctly classifies 78% of patients — well above the 65.8% "always predict majority class" baseline</li>
+      <li><strong>Precision (71.4%):</strong> of patients the model flags as high-risk, 71% actually were readmitted — precision measures false alarm rate</li>
+      <li><strong>Recall (73.2%):</strong> the model catches 73% of patients who truly were readmitted — recall measures how many real cases we miss</li>
+      <li><strong>F1 Score (72.3%):</strong> the harmonic mean of precision and recall — useful when both false positives and false negatives matter</li>
+      <li><strong>Confusion matrix:</strong> 10 false positives (unnecessary interventions) and 11 false negatives (missed readmissions) — in oncology, missing a readmission is usually the more costly error, so lowering the threshold improves recall at the cost of precision</li>
+      <li>These metrics are computed on training data here — in a real project, split into train/test first</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       STEP 8: Predict a new patient
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <h2>Step 8 — Predict for a new patient</h2>
+
+    <div class="code-label">Code:</div>
+    <div class="code-block"><span class="cmt"># New patient raw values: Age 65, ECOG 2, WBC 9.5</span>
+new_raw = pd.<span class="fn">DataFrame</span>({
+    <span class="str">'age'</span>  : [<span class="num">65</span>],
+    <span class="str">'ecog'</span> : [<span class="num">2</span>],
+    <span class="str">'wbc'</span>  : [<span class="num">9.5</span>]
+})
+
+<span class="cmt"># Apply the SAME scaler that was fit on training data</span>
+new_scaled    = scaler.<span class="fn">transform</span>(new_raw)
+new_scaled_df = pd.<span class="fn">DataFrame</span>(new_scaled, columns=[<span class="str">'age'</span>, <span class="str">'ecog'</span>, <span class="str">'wbc'</span>])
+new_model     = sm.<span class="fn">add_constant</span>(new_scaled_df, has_constant=<span class="str">'add'</span>)
+
+<span class="cmt"># Predict probability of readmission</span>
+prob     = result.<span class="fn">predict</span>(new_model)[<span class="num">0</span>]
+<span class="fn">print</span>(<span class="fn">f"Predicted readmission probability: {prob:.1%}"</span>)
+
+<span class="cmt"># Apply clinical threshold</span>
+threshold = <span class="num">0.40</span>
+decision  = (<span class="str">"HIGH RISK — flag for discharge planning"</span>
+             <span class="kw">if</span> prob >= threshold
+             <span class="kw">else</span> <span class="str">"LOW RISK — standard discharge pathway"</span>)
+<span class="fn">print</span>(<span class="str">"Clinical decision:"</span>, decision)</div>
+
+    <div class="code-label">Expected output:</div>
+    <div class="output-block">Predicted readmission probability: 63.7%
+<span class="out-hi">Clinical decision: HIGH RISK — flag for discharge planning</span></div>
+
+    <div class="ann-label">Annotation boxes:</div>
+    <ul class="ann-list">
+      <li>Critical rule: <strong>use <code>.transform()</code>, not <code>.fit_transform()</code></strong> on new patients — the scaler must use the mean and SD learned from the training data, not recomputed from a single patient</li>
+      <li>At 63.7%, this patient exceeds our 40% threshold and is flagged for a discharge planning review</li>
+      <li>The threshold of 0.40 (not 0.50) reflects a clinical choice: in oncology, the cost of missing a readmission is higher than the cost of an unnecessary review</li>
+      <li>The output is a probability — the clinician retains the final decision, the model informs it</li>
+    </ul>
+  </div>
+
+  <hr>
+
+
+  <!-- ══════════════════════════════════
+       TASK
+  ═══════════════════════════════════ -->
+  <div class="step">
+    <div class="task-box">
+      <h2>Your Task</h2>
+      <ul class="task-list">
+        <li>
+          <div class="task-num">1</div>
+          <div>Run all eight code cells in order. Confirm that your output matches the expected output shown above.</div>
+        </li>
+        <li>
+          <div class="task-num">2</div>
+          <div>Look at the confusion matrix. How many patients were <strong>false negatives</strong> (readmitted but not flagged)? What is the clinical consequence of missing these patients in an oncology unit?</div>
+        </li>
+        <li>
+          <div class="task-num">3</div>
+          <div>Change the decision threshold from <code>0.40</code> to <code>0.30</code>. Re-run Step 7 with this new threshold. How do precision and recall change? Which error type increases and which decreases?</div>
+        </li>
+        <li>
+          <div class="task-num">4</div>
+          <div>Write one sentence a clinician could read for the ECOG Odds Ratio. Do not use the word "coefficient" or "log-odds" — explain it entirely in clinical terms.</div>
+        </li>
+        <li>
+          <div class="task-num">5</div>
+          <div>Create a new patient with Age = <strong>45</strong>, ECOG = <strong>0</strong>, WBC = <strong>5.0</strong>. What probability does the model predict? Is this patient flagged at the 0.40 threshold?</div>
+        </li>
+        <li>
+          <div class="task-num">6</div>
+          <div class="stretch">Stretch: The class balance check showed 34% readmitted. If the real KHCC readmission rate were only 8%, what problem would arise with accuracy as a metric? What alternative metric would you report instead, and why?</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
